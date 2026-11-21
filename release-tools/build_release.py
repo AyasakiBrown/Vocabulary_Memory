@@ -11,11 +11,11 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '2.0.0'
+VERSION = '2.1.0'
 OUT = ROOT / 'GitHub-Release' / ('v' + VERSION)
 ELECTRON = '44.3.0'
 ASSETS = ['index.html', 'p1.html', 'vj.html', 'scene.html', 'notebook.html',
-          'wrong.html', 'review.html', 'edef.html', 'edef.js', 'gre.html', 'gre.js', 'gre-paraphrases.js', 'gre-synonym-groups.js', 'gre-synonyms.js', 'mistakes.js', 'srs.js', 'learning-data.js', 'shortcuts.js', 'dict.js', 'defs.js', 'emoji.js', 'images.js', 'icon-512.png', 'icon-180.png', 'AppIcon.icns']
+          'wrong.html', 'records.html', 'review.html', 'edef.html', 'edef.js', 'gre.html', 'gre.js', 'gre-paraphrases.js', 'gre-synonym-groups.js', 'gre-synonyms.js', 'quant.html', 'gre-quant.js', 'mistakes.js', 'srs.js', 'learning-data.js', 'shortcuts.js', 'dict.js', 'defs.js', 'emoji.js', 'images.js', 'icon-512.png', 'icon-180.png', 'AppIcon.icns']
 
 def run(*args):
     subprocess.run(args, check=True)
@@ -90,7 +90,16 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / 'src' / name, target)
         # Include only the public build files, never personal sync scripts/certificates.
-        for name in ['main.cjs', 'desktop.js', 'preload.cjs', 'data-store.cjs', 'test-learning-data.cjs', 'test-desktop-shell.cjs', 'test-edef.cjs', 'test-gre.cjs', 'test-gre-game.cjs', 'test-electron-shell.cjs', 'test-srs.cjs', 'test_native_data.py', 'test_native_smoke.py', 'test-session-resume.cjs', 'test-quiz-retry.cjs', 'test-mistakes.cjs', 'test-production.cjs', 'build_release.py', 'set-exe-icon.cjs', 'make-icon.cjs', 'README.md', 'VERSIONS.md', 'GRE-SYNONYMS.md']:
+        for name in [
+            'main.cjs', 'desktop.js', 'preload.cjs', 'data-store.cjs',
+            'build_release.py', 'set-exe-icon.cjs', 'make-icon.cjs',
+            'test-learning-data.cjs', 'test-desktop-shell.cjs', 'test-electron-shell.cjs',
+            'test-edef.cjs', 'test-gre.cjs', 'test-gre-game.cjs', 'test-quant.cjs',
+            'test-records.cjs', 'test-wrong-scope.cjs', 'test-srs.cjs',
+            'test_native_data.py', 'test_native_smoke.py', 'test-session-resume.cjs',
+            'test-quiz-retry.cjs', 'test-mistakes.cjs', 'test-production.cjs',
+            'README.md', 'VERSIONS.md', 'GRE-SYNONYMS.md',
+        ]:
             write(source / 'release-tools' / name, (ROOT / 'release-tools' / name).read_text())
         shutil.copyfile(ROOT / 'release-tools' / 'AppIcon.ico', source / 'release-tools' / 'AppIcon.ico')
         write(source / 'README.md', (ROOT / 'release-tools' / 'README.md').read_text())
@@ -118,6 +127,8 @@ def main():
         for asset in ['gre.js', 'gre-paraphrases.js', 'gre-synonym-groups.js', 'gre-synonyms.js']:
             page = page.replace(f'<script src="{asset}"></script>', '<script>\n' + (res / asset).read_text() + '\n</script>')
         write(res / 'gre.html', page)
+        page = (res / 'quant.html').read_text()
+        write(res / 'quant.html', page.replace('<script src="gre-quant.js"></script>', '<script>\n' + (res / 'gre-quant.js').read_text() + '\n</script>'))
         bins = []
         for arch in ['arm64', 'x86_64']:
             binary = stage / ('IELTSVocab-' + arch)

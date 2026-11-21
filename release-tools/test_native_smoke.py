@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='ielts-native-smoke-') as folder:
     source = source.replace('func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {', '''func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { smokeStep() }''')
     source = source.replace('let app = NSApplication.shared', r'''
-let smokePages = ["index", "review", "edef", "gre", "p1", "vj", "scene", "notebook", "wrong", "notebook"]
+let smokePages = ["index", "review", "edef", "gre", "quant", "p1", "vj", "scene", "notebook", "wrong", "records", "notebook"]
 var smokeIndex = 0
 func smokeStep() {
     let page = smokePages[smokeIndex]

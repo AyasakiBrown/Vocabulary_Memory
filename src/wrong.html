@@ -18,6 +18,8 @@
   .tools{display:flex;gap:8px;align-items:center;margin:0 2px 12px;flex-wrap:wrap}
   .tools .count{color:var(--soft);font-size:12.5px;margin-right:auto}
   .tools .count b{color:var(--bad);font-size:15px}
+  .scope{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 2px 10px;font-size:12.5px;color:var(--soft)}
+  .scope .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
   input{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
   input:focus{outline:none;border-color:var(--accent)}
   .search{flex:1;min-width:140px}
@@ -48,14 +50,21 @@
   .rc .prog{color:var(--soft);font-size:12px;margin-top:10px}
 body{overscroll-behavior-y:contain}
 button{-webkit-tap-highlight-color:transparent}
+  .homelink{display:inline-flex;align-items:center;font-size:13px;color:var(--soft);border:1px solid var(--line);background:var(--card);border-radius:99px;
+    padding:5px 12px 5px 9px;margin-bottom:12px;text-decoration:none;transition:color .15s,border-color .15s,transform .12s}
+  .homelink:hover{color:var(--accent);border-color:var(--accent)}
+  .homelink:active{transform:scale(.96)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
   <h1>📕 错词本</h1>
-  <p class="sub">三个主词库的听写、选择题答错的词会自动收进这里（含中文、来源词库、错误次数）。答错的词当轮隔几题重测、次日再考；隔天仍答对才建议移出。数据存本地、可同步。</p>
-  <div class="tip" id="tip">💡 在「① Part 1」「② 词汇真经」「③ 听力场景」里做 <b>听写或选择题</b> 时，答错的词会自动收进这里；选择题结束后可点「重练本轮错题」继续复盘。</div>
+  <p class="sub">各词库（GRE 和雅思）的听写、选择题答错的词会自动收进这里（含中文、来源词库、错误次数）。答错的词当轮隔几题重测、次日再考；隔天仍答对才建议移出。数据存本地、可同步。</p>
+  <div class="tip" id="tip">💡 在 GRE 和雅思各词库里做 <b>听写或选择题</b> 时，答错的词会自动收进这里；选择题结束后可点「重练本轮错题」继续复盘。</div>
 
+  <div class="scope" id="scope" role="group" aria-label="错词范围"><span>范围</span>
+    <button class="btn alt sm" data-s="gre">GRE</button><button class="btn alt sm" data-s="ielts">雅思</button><button class="btn alt sm" data-s="all">全部</button></div>
   <div class="tools">
     <span class="count" id="count"></span>
     <input class="search" id="search" placeholder="🔎 搜索单词 / 释义">
@@ -164,13 +173,33 @@ button{-webkit-tap-highlight-color:transparent}
              ["最近写错",function(a,b){return (b.ts||0)-(a.ts||0);}],
              ["字母顺序",function(a,b){return (a.en||"").localeCompare(b.en||"");}]];
   var sortI=0;
+  /* ---------- 范围: GRE / 雅思 / 全部 (a word belongs to GRE if it was missed in the GRE deck) ---------- */
+  function scopeOf(e){ return e&&e.src==='gre'?'gre':'ielts'; }
+  var SCN={gre:'GRE',ielts:'雅思',all:'全部'};
+  var WS=(function(){
+    var v=null; try{ v=localStorage.getItem('ielts_wrong_scope'); }catch(e){} if(SCN[v]) return v;
+    try{ var r=RV.reviewScope&&RV.reviewScope(); if(r==='gre'||r==='ielts') return r; }catch(e){}
+    var p=null; try{ p=JSON.parse(localStorage.getItem('ielts_home_paused')||'null'); }catch(e){}
+    return (!p||p.ielts)?'gre':'all';            // 雅思 paused on the home page (the default): GRE first
+  })();
+  function inWS(e){ return WS==='all'||scopeOf(e)===WS; }
+  function paintScope(){
+    var n={gre:0,ielts:0,all:WR.length}; WR.forEach(function(e){ n[scopeOf(e)]++; });
+    [].forEach.call($('scope').querySelectorAll('button[data-s]'),function(b){ var k=b.getAttribute('data-s');
+      b.classList.toggle('on',k===WS); b.setAttribute('aria-pressed',k===WS?'true':'false'); b.textContent=SCN[k]+' '+n[k]; });
+  }
+  $('scope').addEventListener('click',function(ev){ var b=ev.target.closest('button[data-s]'); if(!b) return;
+    WS=b.getAttribute('data-s'); try{ localStorage.setItem('ielts_wrong_scope',WS); }catch(e){} render(); });
   /* ---------- list ---------- */
   function render(){
     var q=$('search').value.trim().toLowerCase();
-    var rows=WR.slice().sort(SORTS[sortI][1]).filter(function(e){ return !q || (e.en||"").toLowerCase().indexOf(q)>=0 || (e.zh||"").toLowerCase().indexOf(q)>=0; });
+    paintScope();
+    var mine=WR.filter(inWS);
+    var rows=mine.slice().sort(SORTS[sortI][1]).filter(function(e){ return !q || (e.en||"").toLowerCase().indexOf(q)>=0 || (e.zh||"").toLowerCase().indexOf(q)>=0; });
     $('count').textContent='';
-    var c=document.createElement('span'); c.innerHTML='共 <b>'+WR.length+'</b> 个错词'+(q?('（筛出 '+rows.length+'）'):'')+'　·　'+SORTS[sortI][0];
+    var c=document.createElement('span'); c.innerHTML=(WS==='all'?'共':SCN[WS])+' <b>'+mine.length+'</b> 个错词'+(q?('（筛出 '+rows.length+'）'):'')+'　·　'+SORTS[sortI][0];
     $('count').appendChild(c);
+    if(WR.length&&!mine.length){ $('list').innerHTML='<div class="empty"><span class="big">🎯</span>'+SCN[WS]+'还没有错词。<br>其余 '+WR.length+' 个在「全部」里。</div>'; return; }
     if(!WR.length){ $('list').innerHTML='<div class="empty"><span class="big">🎯</span>还没有错词。<br>去各词库里做 ✍️ 听写或选择题，答错的词会自动收到这里。</div>'; return; }
     $('list').innerHTML=rows.map(function(e){
       var media=mediaInline(e.en,30);
@@ -195,14 +224,18 @@ button{-webkit-tap-highlight-color:transparent}
     var blob=new Blob([JSON.stringify({wrong:WR},null,1)],{type:'application/json'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ielts_错词本.json'; a.click();
   };
-  $('clear').onclick=function(){ if(!WR.length){ alert('错词本是空的'); return; } if(confirm('确定清空整本错词本（共 '+WR.length+' 词）？此操作不可撤销。')){ var now=Date.now(); WR.forEach(function(x){ DEL[keyOf(x)]=now; }); WR=[]; save(); render(); } };
+  // 清空 only empties the range on screen
+  $('clear').onclick=function(){ var mine=WR.filter(inWS); if(!mine.length){ alert(WS==='all'?'错词本是空的':SCN[WS]+'没有错词'); return; }
+    if(confirm(WS==='all'?'确定清空整本错词本（共 '+mine.length+' 词）？此操作不可撤销。':'确定清空 '+SCN[WS]+' 的 '+mine.length+' 个错词？其他错词不受影响。此操作不可撤销。')){
+      var now=Date.now(); mine.forEach(function(x){ DEL[keyOf(x)]=now; }); WR=WR.filter(function(x){ return !inWS(x); }); save(); render(); } };
 
   /* ---------- re-dictation (重听写) ---------- */
   var dorder=[], di=0, dright=0, dwrong=0, dpass=[];
   function dToggle(show){ ['dans','dsay','dsubmit','dskip'].forEach(function(id){ $(id).style.display=show?'':'none'; }); }
   function openDictate(){
-    if(!WR.length){ alert('错词本是空的，没有可练的词'); return; }
-    dorder=WR.slice();
+    var mine=WR.filter(inWS);
+    if(!mine.length){ alert(WR.length?SCN[WS]+'没有错词，换个范围试试':'错词本是空的，没有可练的词'); return; }
+    dorder=mine.slice();
     for(var i=dorder.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=dorder[i];dorder[i]=dorder[j];dorder[j]=t; }
     var due=dorder.filter(function(e){return RV.isDue(e.en,'d');});           // due words first
     dorder=due.concat(dorder.filter(function(e){return due.indexOf(e)<0;}));

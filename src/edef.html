@@ -74,10 +74,15 @@
   .choice.wrong{border-color:var(--bad);background:rgba(220,38,38,.1)}
   .choice:disabled{cursor:default}
   .toastmsg{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:rgba(20,24,35,.92);color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;z-index:80}
+  .homelink{display:inline-flex;align-items:center;font-size:13px;color:var(--soft);border:1px solid var(--line);background:var(--card);border-radius:99px;
+    padding:5px 12px 5px 9px;margin-bottom:12px;text-decoration:none;transition:color .15s,border-color .15s,transform .12s}
+  .homelink:hover{color:var(--accent);border-color:var(--accent)}
+  .homelink:active{transform:scale(.96)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
   <h1>🧩 英义猜词</h1>
   <p class="sub">看英文释义，自己想出并拼出这个词。它测的是「读懂释义后，能否提取并拼出单词」，只是词汇掌握的一个侧面，不代表听、说、写中都会用。成绩单独记录，不提升听写和词义选择题的掌握等级。<a href="notebook.html">返回生词本</a> · <a href="review.html">今日复习</a></p>
 

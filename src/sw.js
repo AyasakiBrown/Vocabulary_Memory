@@ -4,10 +4,10 @@
 //        (no version bump needed for the phone to catch up while online).
 // Assets (dict/emoji/images/icons): cache-first (big, rarely change; version bump refreshes).
 // /data and /sync* always go to the network (never cached).
-var C = "ielts-pwa-v56";
-var SHELL = ["/", "/index.html", "/review.html", "/edef.html", "/edef.js", "/gre.html", "/gre.js", "/p1.html", "/vj.html", "/scene.html", "/notebook.html", "/wrong.html",
-             "/gre-paraphrases.js", "/gre-synonym-groups.js", "/gre-synonyms.js", "/mistakes.js", "/srs.js", "/dict.js", "/defs.js", "/emoji.js", "/images.js", "/icon-180.png", "/manifest.webmanifest"];
-var PAGES = ["/", "/index.html", "/review.html", "/edef.html", "/gre.html", "/p1.html", "/vj.html", "/scene.html", "/notebook.html", "/wrong.html"];
+var C = "ielts-pwa-v65";
+var SHELL = ["/", "/index.html", "/review.html", "/edef.html", "/edef.js", "/gre.html", "/gre.js", "/quant.html", "/gre-quant.js", "/p1.html", "/vj.html", "/scene.html", "/notebook.html", "/wrong.html", "/records.html",
+             "/gre-paraphrases.js", "/gre-synonym-groups.js", "/gre-synonyms.js", "/mistakes.js", "/srs.js", "/learning-data.js", "/dict.js", "/defs.js", "/emoji.js", "/images.js", "/icon-180.png", "/manifest.webmanifest"];
+var PAGES = ["/", "/index.html", "/review.html", "/edef.html", "/gre.html", "/quant.html", "/p1.html", "/vj.html", "/scene.html", "/notebook.html", "/wrong.html", "/records.html"];
 
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(C).then(function(c){

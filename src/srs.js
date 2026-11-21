@@ -855,7 +855,7 @@
      res: 1 clean, 2 hint / format slip, 0 wrong — w keeps the day's FIRST answer per word.
      Records older than KEEP_W days drop w and keep u (words) + f (first-try clean). */
   const SKEY = 'ielts_stats', DEVKEY = 'ielts_dev', KEEP_W = 60;
-  const SOURCES = ['p1', 'vj', 'scene', 'gre', 'notebook', 'wrong', 'review'];
+  const SOURCES = ['p1', 'vj', 'scene', 'gre', 'quant', 'notebook', 'wrong', 'review'];
   const PAGE = (() => { try { const m = /([a-z0-9]+)\.html/i.exec(scope.location.pathname); return m ? m[1] : ''; } catch (e) { return ''; } })();
   const pad2 = n => String(n).padStart(2, '0');
   function dateKey(ms) { const d = new Date(ms == null ? api.clock() : ms); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }

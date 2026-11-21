@@ -63,6 +63,9 @@
     for (const label of document.querySelectorAll('#zoombox b')) {
       label.textContent = label.textContent.replace('⌘', 'Ctrl + ');
     }
+    // the redesigned home page: Windows keeps its data under %APPDATA%
+    const dataPath = document.getElementById('dataPath');
+    if (dataPath) dataPath.textContent = '%APPDATA%\\IELTSVocab\\data.json';
     const footer = document.querySelector('footer');
     if (footer) footer.textContent = '学习数据保存在当前用户 %APPDATA%/IELTSVocab/data.json。更新只需替换程序；换电脑前请在「学习数据」菜单导出完整备份。';
   });

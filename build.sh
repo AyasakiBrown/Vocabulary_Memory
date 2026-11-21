@@ -15,6 +15,7 @@ cp "$SRC/p1.html"    "$APP/Contents/Resources/p1.html"
 cp "$SRC/vj.html"    "$APP/Contents/Resources/vj.html"
 cp "$SRC/scene.html" "$APP/Contents/Resources/scene.html"
 cp "$SRC/wrong.html" "$APP/Contents/Resources/wrong.html"
+cp "$SRC/records.html" "$APP/Contents/Resources/records.html"
 # Inline the dictionary into notebook.html so it ALWAYS loads in WKWebView
 # (a file:// <script src> sub-resource can fail silently; inlining can't).
 python3 - "$SRC/notebook.html" "$SRC/dict.js" "$APP/Contents/Resources/notebook.html" "$SRC/defs.js" <<'PY'
@@ -57,6 +58,14 @@ for filename in sys.argv[4:]:
     page=page.replace(f'<script src="{name}"></script>', '<script>\n'+open(filename,encoding='utf-8').read()+'\n</script>')
 open(sys.argv[3],'w',encoding='utf-8').write(page)
 print('  gre.html: word bank, sense paraphrases and synonym groups inlined')
+PY
+# GRE 数学词汇: term bank and problems inlined the same way.
+python3 - "$SRC/quant.html" "$SRC/gre-quant.js" "$APP/Contents/Resources/quant.html" <<'PY'
+import sys
+page=open(sys.argv[1],encoding='utf-8').read()
+assert '<script src="gre-quant.js"></script>' in page
+open(sys.argv[3],'w',encoding='utf-8').write(page.replace('<script src="gre-quant.js"></script>', '<script>\n'+open(sys.argv[2],encoding='utf-8').read()+'\n</script>'))
+print('  quant.html: math term bank inlined')
 PY
 cp "$SRC/learning-data.js" "$APP/Contents/Resources/learning-data.js"
 cp "$SRC/mistakes.js" "$APP/Contents/Resources/mistakes.js"

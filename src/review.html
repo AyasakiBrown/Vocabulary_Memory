@@ -66,10 +66,15 @@
   .pairs{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:10px;align-items:baseline}
   .pairs b{font-size:17px}
   .step{font-size:12.5px;color:var(--soft);margin-bottom:6px}
+  .homelink{display:inline-flex;align-items:center;font-size:13px;color:var(--soft);border:1px solid var(--line);background:var(--card);border-radius:99px;
+    padding:5px 12px 5px 9px;margin-bottom:12px;text-decoration:none;transition:color .15s,border-color .15s,transform .12s}
+  .homelink:hover{color:var(--accent);border-color:var(--accent)}
+  .homelink:active{transform:scale(.96)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
   <h1>📅 今日复习</h1>
   <p class="sub">各词库（含 GRE）、生词本、错词本里到期的词都汇总在这里。听到能拼（听写）、看见能懂（词义）和看到中文能写（生词本写作练习）分开记录；隔天、无提示答对才会延长复习间隔。<a href="index.html">返回主页</a></p>
 

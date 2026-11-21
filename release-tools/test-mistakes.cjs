@@ -48,7 +48,7 @@ const root=path.resolve(__dirname,'../src');
   await page.evaluate(()=>mCheck(moptions.findIndex(x=>x!==NB[morder[mi]].tr)));assert.equal(await count(),n+2);
   await page.locator('#mrestart').click();assert.equal(await page.evaluate(()=>mi),0);assert.equal(await count(),n+2);await page.locator('#mclose').click();
   await page.goto(base+'/wrong.html');
-  await page.evaluate(()=>{WR=[{en:'apple',zh:'苹果',n:7,ts:1}];save();render();});
+  await page.evaluate(()=>{WS='all';WR=[{en:'apple',zh:'苹果',n:7,ts:1}];save();render();});   // an IELTS word: show 全部 (the book opens on GRE while 雅思 is paused)
   await page.locator('#dictate').click();n=await count();await page.locator('#dans').fill('bad');await page.locator('#dsubmit').click();assert.equal(await count(),n+1);
   await page.locator('#drestart').click();assert.equal(await page.evaluate(()=>dwrong),0);assert.equal(await count(),n+1);await page.locator('#dclose').click();
   // Removing a mastered word leaves the dated history intact.

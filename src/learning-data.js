@@ -149,7 +149,7 @@
   // per-deck counters (history, merged by max) still cover days or answers from before
   // it, so each deck takes whichever of the two saw more answers that day.
   const DAILY_DECKS = ['p1', 'vj', 'scene', 'gre'];
-  const SOURCE_NAMES = {p1: 'Part 1', vj: '真经', scene: '场景', gre: 'GRE', notebook: '生词本', wrong: '错词本', review: '今日复习', other: '其他'};
+  const SOURCE_NAMES = {p1: 'Part 1', vj: '真经', scene: '场景', gre: 'GRE', quant: 'GRE 数学', notebook: '生词本', wrong: '错词本', review: '今日复习', other: '其他'};
   function dayNumber(date) {
     const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(date || '');
     return m ? (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3]) : NaN;
@@ -244,6 +244,7 @@
     document.addEventListener('DOMContentLoaded',()=>{
       const zoom=document.getElementById('zoombox');
       if(!zoom || !scope.webkit?.messageHandlers?.learningData)return;
+      if(document.querySelector('[data-records-entry]'))return;   // the home page has its own 学习记录 module (records.html)
       const intro=document.querySelector('header p');
       if(intro)intro.textContent='三个词库与生词、错词集中练习，学习数据保存在本机。更新保留记录，换电脑可导出完整备份。';
       const entry=document.createElement('button');entry.textContent='学习记录与数据转移';

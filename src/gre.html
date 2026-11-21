@@ -411,11 +411,16 @@ button{-webkit-tap-highlight-color:transparent}
 .syn-card .wlink{max-width:100%;white-space:normal;text-align:left}
 .dark .syn-card .wlink,.dark .syn-chain{color:#5eead4}
 @media(max-width:520px){.syn-controls select{width:100%}.syn-card{padding:14px}.syn-actions .btn{flex:1 1 auto}}
+.homelink{flex:0 0 auto; display:inline-flex; align-items:center; height:30px; padding:0 11px 0 9px; border-radius:99px; background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3); color:#fff; font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap; transition:background .15s, transform .12s}
+.homelink:hover{background:rgba(255,255,255,.28)}
+.homelink:active{transform:scale(.95)}
 </style>
 </head>
 <body>
 <header>
   <div class="hbar">
+    <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
     <div class="logo">🎓 GRE 核心词汇 <small id="logoSub">新东方《GRE 核心词汇一本通》</small></div>
     <div class="hstats">
       <div class="center"><b id="hsDone">0</b><br>今日</div>
@@ -2838,11 +2843,17 @@ window.addEventListener('ielts:pulled',()=>{ if(state.mode==='game'&&!gs&&!gm) g
 const gLeave=()=>{ if(gs&&!gs.finished){ gRunSave(); gSave(true); } else if(state.mode==='game') gSave(true); };
 window.addEventListener('pagehide',gLeave);
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') gLeave(); });
-// opened from the home page's 星图 card: gre.html#game, or (in the Mac app, which drops the "#game") a one-time note
-const gAsked=(()=>{ let n=location.hash==='#game';
-  for(const st of [()=>sessionStorage,()=>localStorage]){ try{ const S=st(); if(S.getItem('ielts_gre_open')==='game'){ n=true; S.removeItem('ielts_gre_open'); } }catch(e){} }
-  return n; })();
-setTimeout(()=>{ if((gWasOpen||gAsked)&&state.mode!=='game') enterMode('game'); },0);   // reopen where the learner left off
+// opened from the home page (星图 card or a mode chip): gre.html#game / #quiz …, or (in the Mac app, which drops
+// the "#…") a one-time note naming the tab; only a tab that exists on this page is accepted
+// The home page's 今日计划 can also ask the map to start a mission right away: "game:<hub button id>" (only these buttons).
+const G_GO=['gRunGo','gGoBlitz','gGoRekFast','gGoRek','gGoSpark','gGoNew','gGoGlim'];
+let gAskBtn='';
+const gAsked=(()=>{ let m=(/^#(\w+)$/.exec(location.hash)||[])[1]||'';
+  for(const st of [()=>sessionStorage,()=>localStorage]){ try{ const S=st(), v=S.getItem('ielts_gre_open'); if(v){ m=v; S.removeItem('ielts_gre_open'); } }catch(e){} }
+  const p=String(m).split(':'); m=p[0]; if(m==='game'&&G_GO.includes(p[1])) gAskBtn=p[1];
+  return /^\w+$/.test(m)&&document.querySelector('#tabs .tab[data-mode="'+m+'"]')?m:''; })();
+setTimeout(()=>{ const m=gAsked||(gWasOpen?'game':''); if(m&&state.mode!==m) enterMode(m);   // or reopen where the learner left off
+  if(gAskBtn&&state.mode==='game'&&!gs&&!gm){ const b=$(gAskBtn); if(b&&!b.disabled) b.click(); } },0);
 
 function applyDark(){ document.body.classList.toggle('dark',settings.dark); }
 

@@ -342,17 +342,23 @@ const root=path.resolve(__dirname,'../src');
 
   // ---------- home page card and resuming an interrupted mission (a fresh learner) ----------
   const p3=await (await browser.newContext()).newPage(); p3.on('pageerror',e=>errors.push('resume: '+e.message));
-  const starCard=()=>p3.evaluate(()=>{ const c=[...document.querySelectorAll('#grid .card')].find(x=>/星图/.test(x.textContent)); return c&&{text:c.querySelector('.stats').innerText.replace(/\n/g,' | '),href:c.getAttribute('href'),hot:!!c.style.borderColor,
-    after:c.previousElementSibling&&c.previousElementSibling.querySelector('.name').textContent,cls:c.className}; });
+  const starCard=()=>p3.evaluate(()=>{ const c=document.getElementById('starTile'); return c&&{text:c.querySelector('.stats').innerText.replace(/\n/g,' | '),href:c.getAttribute('href'),hot:c.classList.contains('hot'),
+    module:c.closest('.mod').dataset.mod,next:c.nextElementSibling&&c.nextElementSibling.querySelector('.t-name').textContent}; });
   await p3.goto(base+'/index.html');
-  assert.deepEqual(await starCard(),{text:'还没开始 · 点亮你的第一颗星',href:'gre.html#game',hot:true,after:'GRE 核心词汇',cls:'card'});
-  await p3.evaluate(()=>[...document.querySelectorAll('#grid .card')].find(x=>/星图/.test(x.textContent)).click());
+  assert.deepEqual(await starCard(),{text:'还没开始 · 点亮你的第一颗星',href:'gre.html#game',hot:true,module:'gre',next:'GRE 核心词汇'});
+  await p3.evaluate(()=>document.getElementById('starTile').click());
   await p3.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='game');
   // the Mac app drops "#game" from local links: the card's one-time note opens the map instead, and is used up
   assert.equal(await p3.evaluate(()=>localStorage.getItem('ielts_gre_open')),null);
   await p3.evaluate(()=>{ enterMode('flash'); localStorage.setItem('ielts_gre_open','game'); });
   await p3.goto(base+'/gre.html'); await p3.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='game');
   assert.equal(await p3.evaluate(()=>localStorage.getItem('ielts_gre_open')),null);
+  // the GRE tile's mode chips open that tab directly; the Mac app drops "#quiz", so the one-time note does it there
+  await p3.goto(base+'/index.html'); await p3.evaluate(()=>document.querySelector('#mod-gre .chip[data-mode="quiz"]').click());
+  await p3.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='quiz');
+  await p3.evaluate(()=>localStorage.setItem('ielts_gre_open','cloze')); await p3.goto(base+'/gre.html'); await p3.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='cloze');
+  await p3.evaluate(()=>{ enterMode('flash'); localStorage.setItem('ielts_gre_open','nope"]'); }); await p3.goto(base+'/gre.html'); await p3.waitForTimeout(300);
+  assert.deepEqual(await p3.evaluate(()=>[state.mode,localStorage.getItem('ielts_gre_open')]),['flash',null]);
   await p3.evaluate(()=>enterMode('flash')); await p3.reload(); await p3.waitForTimeout(300);
   assert.equal(await p3.evaluate(()=>state.mode),'flash');
   await p3.evaluate(()=>enterMode('game'));
@@ -420,7 +426,19 @@ const root=path.resolve(__dirname,'../src');
   await p4.reload(); await p4.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='game');
   assert.deepEqual(await p4.evaluate(()=>[G.exam,G.goal]),[ex,97]);
   await p4.goto(base+'/index.html');
-  assert.match(await p4.evaluate(()=>[...document.querySelectorAll('#grid .card')].find(x=>/星图/.test(x.textContent)).querySelector('.stats').innerText),/📅 距考试 37 天/);
+  await p4.waitForFunction(()=>/📅 距 GRE 考试 37 天/.test(document.getElementById('hero').innerText),null,{timeout:3000});   // numbers count up on first paint
+  // with an exam date the banner is 今日计划: 点亮新星 starts ⚡ 极速点亮 straight away (the Mac app drops "#game": the one-time note carries it)
+  assert.deepEqual(await p4.evaluate(()=>[...document.querySelectorAll('#hero .prow')].map(r=>r.dataset.plan+':'+r.querySelector('.pgo').textContent)),
+    ['review:查看','light:⚡ 极速点亮','rekindle:⚡ 极速重燃','quant:学新词 →']);
+  assert.match(await p4.locator('#hero [data-plan="light"]').innerText(),/0 \/ 97 颗/);
+  await p4.locator('#hero [data-plan="light"] .pgo').click();
+  await p4.waitForFunction(()=>typeof gs!=='undefined'&&gs&&gs.kind==='blitz'&&!gs.finished);
+  assert.equal(await p4.evaluate(()=>localStorage.getItem('ielts_gre_open')),null);
+  await p4.evaluate(()=>{ gExit(); if($('gRunDrop')) $('gRunDrop').click(); });
+  // only hub buttons on the list can be pressed this way
+  await p4.evaluate(()=>localStorage.setItem('ielts_gre_open','game:gExamClear')); await p4.goto(base+'/gre.html');
+  await p4.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='game'); await p4.waitForTimeout(200);
+  assert.deepEqual(await p4.evaluate(()=>[G.exam,!!gs]),[ex,false]);
   await p4.goto(base+'/gre.html'); await p4.waitForFunction(()=>typeof state!=='undefined'&&state.mode==='game');
   // the last week: no new stars on the bright button, reviews only
   await setExam(5);

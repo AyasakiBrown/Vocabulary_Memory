@@ -27,13 +27,16 @@ test('Windows 菜单逐项打开对应页面，数据桥拒绝外部页面和子
     });
     await Promise.resolve();
     const entries=menu.template.find(m=>m.label==='词库').submenu;
-    const pages=['index','review','edef','gre','p1','vj','scene','notebook','wrong'];
-    const labels=['主页','今日复习','英义猜词','GRE 核心词汇','Part 1 高频词','词汇真经','听力场景词汇','生词本','错词本'];
+    const pages=['index','review','edef','gre','quant','p1','vj','scene','notebook','wrong','records'];
+    const labels=['主页','今日复习','英义猜词','GRE 核心词汇','∑ GRE 数学词汇','Part 1 高频词','词汇真经','听力场景词汇','生词本','错词本','学习记录'];
     assert.equal(entries.length,pages.length);
     for(let i=0;i<pages.length;i++) {
       assert.equal(entries[i].label,labels[i]);entries[i].click();
       assert.equal(win.webContents.mainFrame.url,pathToFileURL(path.join(dir,'src',pages[i]+'.html')).href);
     }
+    // 学习数据 → 学习记录与数据转移 opens the records page (charts + backup buttons)
+    entries[0].click(); menu.template.find(m=>m.label==='学习数据').submenu.find(m=>m.label==='学习记录与数据转移').click();
+    assert.equal(win.webContents.mainFrame.url,pathToFileURL(path.join(dir,'src','records.html')).href);
     const event=()=>({sender:win.webContents,senderFrame:win.webContents.mainFrame});
     const call=(action,payload,e=event())=>{ipc['learning-data'](e,action,payload);return e.returnValue;};
     assert.equal(call('seed',{v:1,decks:{}}).ok,true);

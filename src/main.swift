@@ -590,8 +590,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     @objc func goVj()    { loadResource("vj") }
     @objc func goScene() { loadResource("scene") }
     @objc func goGre() { loadResource("gre") }
+    @objc func goQuant() { loadResource("quant") }
     @objc func goNotebook() { loadResource("notebook") }
     @objc func goWrong() { loadResource("wrong") }
+    @objc func goRecords() { loadResource("records") }
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "persist", let s = message.body as? String { persistDeck(s) }
@@ -708,17 +710,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let edef = deckMenu.addItem(withTitle: "🔤 英义猜词", action: #selector(goEdef), keyEquivalent: ""); edef.target = self
         deckMenu.addItem(.separator())
         let gre = deckMenu.addItem(withTitle: "🎓 GRE 核心词汇", action: #selector(goGre), keyEquivalent: ""); gre.target = self
+        let quant = deckMenu.addItem(withTitle: "∑ GRE 数学词汇", action: #selector(goQuant), keyEquivalent: ""); quant.target = self
         let m1 = deckMenu.addItem(withTitle: "① Part 1 高频词", action: #selector(goP1), keyEquivalent: ""); m1.target = self
         let m2 = deckMenu.addItem(withTitle: "② 词汇真经", action: #selector(goVj), keyEquivalent: ""); m2.target = self
         let m3 = deckMenu.addItem(withTitle: "③ 听力场景词汇", action: #selector(goScene), keyEquivalent: ""); m3.target = self
         deckMenu.addItem(.separator())
         let m4 = deckMenu.addItem(withTitle: "📒 生词本", action: #selector(goNotebook), keyEquivalent: ""); m4.target = self
         let m5 = deckMenu.addItem(withTitle: "📕 错词本", action: #selector(goWrong), keyEquivalent: ""); m5.target = self
+        deckMenu.addItem(.separator())
+        let rec = deckMenu.addItem(withTitle: "📈 学习记录", action: #selector(goRecords), keyEquivalent: ""); rec.target = self
         deckItem.submenu = deckMenu
 
         let dataItem = NSMenuItem(); main.addItem(dataItem)
         let dataMenu = NSMenu(title: "学习数据")
-        for (title, action) in [("学习记录与数据转移", #selector(showLearningData)), ("导出完整备份…", #selector(exportLearningData)), ("从备份恢复…", #selector(importLearningData)), ("从最近的有效备份恢复…", #selector(restoreLatestBackup)), ("打开自动备份目录", #selector(openBackupFolder))] {
+        for (title, action) in [("学习记录与数据转移", #selector(goRecords)), ("导出完整备份…", #selector(exportLearningData)), ("从备份恢复…", #selector(importLearningData)), ("从最近的有效备份恢复…", #selector(restoreLatestBackup)), ("打开自动备份目录", #selector(openBackupFolder))] {
             let item = dataMenu.addItem(withTitle: title, action: action, keyEquivalent: ""); item.target = self
         }
         dataItem.submenu = dataMenu

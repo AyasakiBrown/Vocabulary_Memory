@@ -17,7 +17,20 @@ else {
   app.on('second-instance', () => { if (win) { win.restore(); win.focus(); } });
   app.whenReady().then(() => {
     const store = new DataStore(app.getPath('userData'));
-    const pages = ['index', 'review', 'edef', 'gre', 'p1', 'vj', 'scene', 'notebook', 'wrong'];
+    const pageLabels = {
+      index: '主页',
+      review: '今日复习',
+      edef: '英义猜词',
+      gre: 'GRE 核心词汇',
+      quant: '∑ GRE 数学词汇',
+      p1: 'Part 1 高频词',
+      vj: '词汇真经',
+      scene: '听力场景词汇',
+      notebook: '生词本',
+      wrong: '错词本',
+      records: '学习记录'
+    };
+    const pages = Object.keys(pageLabels);
     const urls = pages.map(p => pathToFileURL(path.join(__dirname, 'src', p + '.html')).href);
     session.defaultSession.webRequest.onBeforeRequest({urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*']}, (_, callback) => callback({cancel: true}));
     // Only the microphone, only for our own pages (生词本 口语练习 records for local playback).
@@ -103,10 +116,9 @@ else {
     win.webContents.setWindowOpenHandler(({url}) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return {action: 'deny'}; });
     win.webContents.on('will-navigate', (event, url) => { if (!ownPage(url)) { event.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } });
     win.webContents.on('will-attach-webview', event => event.preventDefault());
-    const labels = ['主页', '今日复习', '英义猜词', 'GRE 核心词汇', 'Part 1 高频词', '词汇真经', '听力场景词汇', '生词本', '错词本'];
     Menu.setApplicationMenu(Menu.buildFromTemplate([
-      {label: '词库', submenu: pages.map((_, i) => ({label: labels[i], click: () => win.loadURL(urls[i])}))},
-      {label: '学习数据', submenu: [{label:'学习记录与数据转移',click:()=>win.webContents.executeJavaScript('window.showLearningData()')},{label:'导出完整备份…',click:()=>dataAction('export')},{label:'从备份恢复…',click:()=>dataAction('import')},{label:'从最近的有效备份恢复…',click:()=>dataAction('latest')},{label:'打开自动备份目录',click:()=>dataAction('folder')}]},
+      {label: '词库', submenu: pages.map((page, i) => ({label: pageLabels[page], click: () => win.loadURL(urls[i])}))},
+      {label: '学习数据', submenu: [{label:'学习记录与数据转移',click:()=>win.loadURL(urls[pages.indexOf('records')])},{label:'导出完整备份…',click:()=>dataAction('export')},{label:'从备份恢复…',click:()=>dataAction('import')},{label:'从最近的有效备份恢复…',click:()=>dataAction('latest')},{label:'打开自动备份目录',click:()=>dataAction('folder')}]},
       {label: '编辑', submenu: [{label: '撤销', role: 'undo'}, {label: '重做', role: 'redo', accelerator: 'CommandOrControl+Shift+Z'}, {type: 'separator'}, {label: '剪切', role: 'cut'}, {label: '复制', role: 'copy'}, {label: '粘贴', role: 'paste'}, {label: '全选', role: 'selectAll'}]},
       {label: '显示', submenu: [
         {label: '放大字号', click: () => win.webContents.executeJavaScript('window.adjustDesktopZoom(0.1)')},

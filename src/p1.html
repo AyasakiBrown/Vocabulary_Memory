@@ -192,11 +192,16 @@ kbd{background:var(--chip); border:1px solid var(--line); border-bottom-width:2p
 }
 body{overscroll-behavior-y:contain}
 button{-webkit-tap-highlight-color:transparent}
+.homelink{flex:0 0 auto; display:inline-flex; align-items:center; height:30px; padding:0 11px 0 9px; border-radius:99px; background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3); color:#fff; font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap; transition:background .15s, transform .12s}
+.homelink:hover{background:rgba(255,255,255,.28)}
+.homelink:active{transform:scale(.95)}
 </style>
 </head>
 <body>
 <header>
   <div class="hbar">
+    <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
     <div class="logo">🎧 雅思 Part 1 听写记忆 <small>职业·房屋·服务·衣物</small></div>
     <div class="hstats">
       <div class="center"><b id="hsDone">0</b><br>今日</div>

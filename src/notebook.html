@@ -104,10 +104,15 @@
   .xref{font-size:13px;color:var(--soft);margin-top:8px;line-height:1.55;text-align:left}
 body{overscroll-behavior-y:contain}
 button{-webkit-tap-highlight-color:transparent}
+  .homelink{display:inline-flex;align-items:center;font-size:13px;color:var(--soft);border:1px solid var(--line);background:var(--card);border-radius:99px;
+    padding:5px 12px 5px 9px;margin-bottom:12px;text-decoration:none;transition:color .15s,border-color .15s,transform .12s}
+  .homelink:hover{color:var(--accent);border-color:var(--accent)}
+  .homelink:active{transform:scale(.96)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <a class="homelink" href="index.html" title="回到主页">‹ 主页</a>
   <h1>📒 生词本</h1>
   <p class="sub">练习里遇到不会的词，敲进来回车即可 —— 自动配上音标、中文释义和发音（离线词典 5.8 万词）。数据存本地。</p>
 

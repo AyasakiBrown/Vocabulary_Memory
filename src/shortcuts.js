@@ -6,7 +6,7 @@
   const actions = [
     ['home','主页',mod+'+Digit0'], ['review','今日复习',mod+'+Digit6'], ['p1','Part 1 高频词',mod+'+Digit1'],
     ['vj','词汇真经',mod+'+Digit2'], ['scene','听力场景词汇',mod+'+Digit3'],
-    ['notebook','生词本',mod+'+Digit4'], ['wrong','错词本',mod+'+Digit5'], ['gre','GRE 核心词汇',mod+'+Digit7'],
+    ['notebook','生词本',mod+'+Digit4'], ['wrong','错词本',mod+'+Digit5'], ['gre','GRE 核心词汇',mod+'+Digit7'], ['records','学习记录',mod+'+Digit8'],
     ['zoomIn','放大字号',mod+'+Shift+Equal'], ['zoomOut','缩小字号',mod+'+Minus'],
     ['zoomReset','恢复字号',mod+'+Shift+Digit0'],
     ['replay','重听当前词','Alt+KeyR'], ['next','下一题 / 跳过','Alt+ArrowRight'],
@@ -112,7 +112,7 @@
     const overlay=[...document.querySelectorAll('.ov.show, .modal.show')].pop();
     const scope=overlay||document;
     const typing=document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
-    const pages={home:'index',review:'review',p1:'p1',vj:'vj',scene:'scene',gre:'gre',notebook:'notebook',wrong:'wrong'};
+    const pages={home:'index',review:'review',p1:'p1',vj:'vj',scene:'scene',gre:'gre',notebook:'notebook',wrong:'wrong',records:'records'};
     if(pages[id]) { location.href=pages[id]+'.html';return true; }
     if(id==='settings') {window.openShortcutSettings();return true;}
     if(id.startsWith('zoom')) {
