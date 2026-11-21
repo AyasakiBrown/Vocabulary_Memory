@@ -1,4 +1,4 @@
-# Vocabulary Memory（原名：雅思词汇听写合集）
+# Vocabulary Memory
 
 支持 Windows 和 macOS 的离线桌面工具，包含听写、生词本、错词本、今日复习，以及听力、阅读、写作和口语分类练习。学习数据保存在本地。
 
@@ -11,19 +11,9 @@
 
 Windows 版本尚未完成真机验证，因此本版标记为测试版。
 
-## 设计故事 · The Story Behind Vocabulary Memory
+## 设计故事
 
-### 中文
-
-2026 年 7 月初，我开始用 Vocabulary Memory 准备雅思。它最初是我为自己做的词汇练习工具。我用它练听写、复习生词和错词，遇到不顺手的地方就一点点改。几个月下来，它成了我备考时常用的工具，也帮我把词汇练习坚持了下来。
-
-现在，我把 Vocabulary Memory 分享出来。无论你在准备雅思还是 GRE，希望它也能帮你积累词汇，找到适合自己的复习节奏。
-
-### English
-
-I started using Vocabulary Memory in early July 2026 while preparing for IELTS. I built it for my own vocabulary practice and used it for dictation, reviewing new words, and revisiting mistakes. As I studied, I kept refining the app based on what I needed in practice. Over the next few months, it became a regular part of how I prepared for IELTS and helped me keep up with vocabulary practice.
-
-I’m sharing Vocabulary Memory in the hope that it helps you build your vocabulary and find a review routine that works for you, whether you’re preparing for IELTS or the GRE.
+[从雅思备考到 Vocabulary Memory（中文 / English）](projects/design-story/README.md)
 
 ## 安装与首次打开
 
