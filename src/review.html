@@ -29,6 +29,8 @@
   .btn.alt{background:transparent;border:1px solid var(--line);color:var(--ink)}
   .btn.sm{padding:5px 10px;font-size:12px}
   .btn:disabled{opacity:.45;cursor:default}
+  .scope{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:12.5px;color:var(--soft)}
+  .scope .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
   [hidden]{display:none!important}
   .ghosti{background:transparent;border:none;cursor:pointer;color:var(--soft);font-size:14px;padding:2px 5px}
   select,input{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
@@ -69,9 +71,12 @@
 <body>
 <div class="wrap">
   <h1>📅 今日复习</h1>
-  <p class="sub">三个词库、生词本、错词本里到期的词都汇总在这里。听到能拼（听写）、看见能懂（词义）和看到中文能写（生词本写作练习）分开记录；隔天、无提示答对才会延长复习间隔。<a href="index.html">返回主页</a></p>
+  <p class="sub">各词库（含 GRE）、生词本、错词本里到期的词都汇总在这里。听到能拼（听写）、看见能懂（词义）和看到中文能写（生词本写作练习）分开记录；隔天、无提示答对才会延长复习间隔。<a href="index.html">返回主页</a></p>
 
   <div class="panel">
+    <div class="scope" id="scope" role="group" aria-label="复习范围"><span>复习范围</span>
+      <button class="btn alt sm" data-s="all">全部</button><button class="btn alt sm" data-s="gre">GRE</button><button class="btn alt sm" data-s="ielts">雅思</button>
+      <span class="note" id="scopeNote" style="margin:0"></span></div>
     <div class="grid" id="stats"></div>
     <p class="note" id="detail"></p>
     <div class="tools">
@@ -113,6 +118,7 @@
   <div class="panel">
     <h2>学习新词</h2>
     <p class="note" style="margin:0 0 10px">复习完成后再学少量新词。新词第一次答对后会自动排到明天复测。</p>
+    <a class="btn alt" href="gre.html">🎓 GRE 核心词汇</a>
     <a class="btn alt" href="p1.html">① Part 1 高频词</a>
     <a class="btn alt" href="vj.html">② 词汇真经</a>
     <a class="btn alt" href="scene.html">③ 听力场景</a>
@@ -164,7 +170,7 @@
   setSubmit('提交');
   var RV=window.IELTSReview;
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  var SRCN={p1:'Part 1',vj:'词汇真经',scene:'听力场景',notebook:'生词本',wrong:'错词本',other:'其他'};
+  var SRCN={p1:'Part 1',vj:'词汇真经',scene:'听力场景',gre:'GRE',notebook:'生词本',wrong:'错词本',other:'其他'};
   var TRN={d:'听写',m:'词义',p:'看中文写'};
 
   /* ---------- TTS + wake lock (same behaviour as the other pages) ---------- */
@@ -197,7 +203,11 @@
   function pct(a){ return a[1]?Math.round(a[0]/a[1]*100)+'%':'—'; }
   function paint(){
     if(!RV){ $('stats').innerHTML=''; $('detail').textContent='复习模块未能加载（srs.js）。请联网刷新一次，或重新打开软件。'; ['start','startD','startM'].forEach(function(id){$(id).disabled=true;}); return; }
-    var s=RV.summary(), q=RV.queue().filter(usable), nd=0, nm=0, np=0, by={};
+    var s=RV.summary(), q=RV.queue().filter(usable), nd=0, nm=0, np=0, by={}, sc=s.scope||'all';
+    // 复习范围: GRE / 雅思 / 全部 — the counts are everything due in that scope (before the daily cap)
+    [].forEach.call($('scope').querySelectorAll('button[data-s]'),function(b){ var k=b.getAttribute('data-s'); b.classList.toggle('on',k===sc); b.setAttribute('aria-pressed',k===sc?'true':'false');
+      b.textContent={all:'全部',gre:'GRE',ielts:'雅思'}[k]+(s.scopes?' '+s.scopes[k]:''); });
+    $('scopeNote').textContent=sc==='all'?'':'只复习'+(sc==='gre'?' GRE ':'雅思')+'里学过的词；其余的词照常记录、到期等你回来，不会丢';
     q.forEach(function(x){ if(x.track==='d')nd++; else if(x.track==='p')np++; else nm++; (x.rec.src&&x.rec.src.length?x.rec.src:['other']).forEach(function(k){ by[k]=(by[k]||0)+1; }); });
     $('stats').innerHTML=stat(q.length,'今日待复习',q.length?'--bad':'--good')+stat(s.done,'今日已复习')+stat(s.waiting,'排队中')+stat(s.tomorrow,'明天到期')+stat(s.stable,'较稳定','--good');
     var parts=[];
@@ -207,7 +217,7 @@
       parts.push('来源：'+Object.keys(by).map(function(k){return (SRCN[k]||k)+' '+by[k];}).join('、'));
     }else parts.push(s.tracked?'今天到期的词已全部复习完 🎉':'还没有复习记录。去词库或生词本做一次听写 / 选择题，答过的词会自动排进复习。');
     if(s.waiting) parts.push('另有 '+s.waiting+' 个旧错词在排队，按每日上限逐天放出，不会一次压过来');
-    var ed=RV.queue({tracks:['e'],cap:false}).length;     // 英义回忆 has its own page and record
+    var ed=sc==='gre'?0:RV.queue({tracks:['e'],cap:false}).length;     // 英义回忆 has its own page and record (its bank is 生词本 words, so not in the GRE scope)
     $('edefDue').hidden=!ed; $('edefDue').textContent='🧩 英义猜词到期 '+ed+' 词';
     if(ed) parts.push('英义回忆另有 '+ed+' 词到期，在「英义猜词」里复测，不占这里的上限');
     $('detail').textContent=parts.join('　·　');
@@ -221,7 +231,7 @@
     $('cap').value=String(s.cap); if($('cap').value!==String(s.cap)){ var o=document.createElement('option'); o.textContent=String(s.cap); $('cap').appendChild(o); $('cap').value=String(s.cap); }
 
     var today=RV.dayNo(), days=[0,0,0,0,0,0,0], all=RV.all();
-    Object.keys(all).forEach(function(k){ ['d','m','p'].forEach(function(t){ var tr=all[k]&&all[k][t]; if(!tr||!((tr.n||0)>0||tr.mk)) return; var n=(tr.due||0)-today; if(n>=1&&n<=7) days[n-1]++; }); });
+    Object.keys(all).forEach(function(k){ if(RV.inScope&&!RV.inScope(all[k],sc)) return; ['d','m','p'].forEach(function(t){ var tr=all[k]&&all[k][t]; if(!tr||!((tr.n||0)>0||tr.mk)) return; var n=(tr.due||0)-today; if(n>=1&&n<=7) days[n-1]++; }); });
     var max=Math.max.apply(null,days.concat([1]));
     $('ahead').innerHTML=days.map(function(n,i){ var d=new Date(Date.now()+(i+1)*864e5); return '<div class="bar"><span>'+(i===0?'明天':(d.getMonth()+1)+'/'+d.getDate())+'</span><i><b style="width:'+Math.round(n/max*100)+'%"></b></i><span>'+n+' 词</span></div>'; }).join('');
 
@@ -455,7 +465,9 @@
 
   /* ---------- 针对训练: drill the cause, not just the word ---------- */
   var GROUP=8, D=null, dstep=null;
-  function troubles(){ OWN=ownWords(); return RV.troubles({min:$('drillAll').checked?1:2,isWord:DX.isWord,isKnown:DX.isKnown,sameSound:DX.sameSound}); }
+  function troubles(){ OWN=ownWords(); var sc=RV.reviewScope?RV.reviewScope():'all';
+    return RV.troubles({min:$('drillAll').checked?1:2,isWord:DX.isWord,isKnown:DX.isKnown,sameSound:DX.sameSound})
+      .filter(function(t){ return !RV.inScope||RV.inScope(t.rec||{src:t.src?[t.src]:[]},sc); }); }
   function paintDrill(){
     if(!RV||!RV.troubles){ $('drillNote').textContent='针对训练需要新版复习模块，请刷新页面。'; $('drillStart').disabled=true; return; }
     var list=troubles(), causes={}, eff=RV.drillEffect();
@@ -659,6 +671,7 @@
   $('startM').onclick=function(){ begin(RV.queue().filter(function(x){return x.track==='m';})); };
   $('more').onclick=function(){ begin(RV.queue({cap:false}).filter(usable).slice(0,20)); };
   $('cap').onchange=function(){ RV.setCap(+this.value); paint(); };
+  $('scope').addEventListener('click',function(ev){ var b=ev.target.closest('button[data-s]'); if(!b||!RV.setReviewScope) return; RV.setReviewScope(b.getAttribute('data-s')); paint(); });
   $('dsubmit').onclick=function(){ if(mode==='drill') drillSubmit(); else submitDict(); };
   $('mnext').onclick=function(){ if(mode==='drill') drillNext(); else next(); };
   $('dskip').onclick=function(){ if(answered) return; if(mode==='drill') drillNext(); else next(); };

@@ -16,7 +16,7 @@ const root=path.resolve(__dirname,'../src');
   await page.addInitScript(()=>{window.__payloads=[];window.webkit={messageHandlers:{persist:{postMessage:s=>window.__payloads.push(JSON.parse(s))}}};});
   const base='http://127.0.0.1:'+server.address().port;
   const count=()=>page.evaluate(()=>Object.keys(IELTSMistakes.read()).length);
-  for(const deck of ['p1','vj','scene']){
+  for(const deck of ['p1','vj','scene','gre']){
    await page.goto(base+'/'+deck+'.html');
    await page.evaluate(()=>{settings.auto=false;settings.order='seq';enterMode('dict',true);});
    const original=await page.evaluate(()=>state.list.map(v=>v.id)),n=await count();

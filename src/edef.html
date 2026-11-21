@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+<script src="mistakes.js"></script>
 <script src="srs.js"></script>
 <script src="edef.js"></script>
 <meta charset="utf-8">
@@ -84,6 +85,7 @@
     <h2>范围</h2>
     <div class="chips" id="cats"></div>
     <p class="note" id="cover"></p>
+    <div class="tools practice-actions" id="errRow" style="margin-top:8px"></div>
     <div class="tools"><span style="font-size:13.5px">作答方式</span><span class="chips" id="fmts"></span></div>
     <p class="note" id="fmtNote" style="margin-top:6px"></p>
     <details id="gapBox"><summary id="gapSum"></summary><p class="note" id="gapList"></p></details>
@@ -164,7 +166,7 @@
   function toast(t){ var d=document.createElement('div'); d.className='toastmsg'; d.textContent=t; document.body.appendChild(d); setTimeout(function(){ d.remove(); },2600); }
 
   /* ---------- 生词本 (read only: union of this device and the synced copy, minus deletions) ---------- */
-  var CATS=[['all','全部'],['lw','🎧 听力'],['rw','📖 阅读'],['ww','📝 写作'],['sw','🗣️ 口语'],['none','未分类']];
+  var CATS=[['all','全部'],['lw','🎧 听力'],['rw','📖 阅读'],['ww','📝 写作'],['sw','🗣️ 口语'],['none','未分类'],['err','📕 错题库']];
   var CAT='all', FMT='c';
   try{ var f0=localStorage.getItem('ielts_edef_fmt'); if(f0==='c'||f0==='w') FMT=f0; }catch(e){}
   var FMTS=[['c','选择题'],['w','自己输入']];
@@ -184,10 +186,29 @@
     });
     return out;
   }
+  /* ---------- 错题库 = 错词本 + 每日错词记录 (both synced through deck `wrong`), minus 错词本 deletions ---------- */
+  function readErr(){
+    var D=window.__INITIAL_STATE__&&window.__INITIAL_STATE__.decks&&window.__INITIAL_STATE__.decks.wrong||{};
+    var list=[], del={}, ev={}, out={}, order=[];
+    try{ list=JSON.parse(localStorage.getItem('ielts_wrong'))||[]; }catch(e){}
+    try{ del=JSON.parse(localStorage.getItem('ielts_wrong_del'))||{}; }catch(e){}
+    var bd=D.del||{}; for(var k in bd) if(has(bd,k)&&(bd[k]||0)>(del[k]||0)) del[k]=bd[k];
+    if(Array.isArray(D.list)) list=list.concat(D.list);
+    try{ ev=window.IELTSMistakes?IELTSMistakes.read():Object.assign({},D.events||{},JSON.parse(localStorage.getItem('ielts_wrong_events'))||{}); }catch(e){}
+    function add(w,from,ts){
+      w=String(w||'').trim(); if(!w) return; var k=w.toLowerCase();
+      if(!has(out,k)){ out[k]={w:w,book:false,log:0,last:0}; order.push(k); }
+      var o=out[k]; if(from==='book') o.book=true; else o.log++; if((ts||0)>o.last) o.last=ts||0;
+    }
+    list.forEach(function(e){ if(!e||!e.en) return; var k=String(e.en).toLowerCase(); if(del[k]&&(e.ts||0)<=del[k]) return; add(e.en,'book',e.ts); });
+    Object.keys(ev).forEach(function(id){ var e=ev[id]; if(e&&e.word) add(e.word,'log',e.ts); });
+    return order.map(function(k){ return out[k]; });
+  }
   function inCat(n,cat){ return cat==='all'||(cat==='none'?!(n.lw||n.rw||n.ww||n.sw):!!n[cat]); }
   function catLabel(n){ return [['lw','听力'],['rw','阅读'],['ww','写作'],['sw','口语']].filter(function(c){return n[c[0]];}).map(function(c){return c[1];}).join(' · ')||'未分类'; }
   // One question per bank line, even when two notebook entries share it (persuade / persuaded).
   function pool(cat){
+    if(cat==='err') return errPool();
     var NB=readNB(), byKey={}, items=[], total=0, gaps={phrase:[],pending:[]};
     NB.forEach(function(n){
       if(!inCat(n,cat)) return; total++;
@@ -197,6 +218,21 @@
       byKey[k]={key:k, e:E.entries[k], nb:n}; items.push(byKey[k]);
     });
     return {items:items, total:total, gaps:gaps};
+  }
+  // Error-bank words only have a question when the reviewed definition bank covers them;
+  // the bank is written for 生词本, so most Part 1 / 真经 / 场景 words wait outside.
+  function errPool(){
+    var NB={}, byKey={}, items=[], gaps={phrase:[],pending:[]}, ERR=readErr(), book=0, log=0;
+    readNB().forEach(function(n){ NB[n.w.toLowerCase()]=n; });
+    ERR.forEach(function(x){
+      if(x.book) book++; if(x.log) log++;
+      var k=E.keyOf(x.w);
+      if(!k){ gaps[E.gap(x.w)||'pending'].push(x.w); return; }
+      if(has(byKey,k)) return;
+      var e=E.entries[k], n=NB[x.w.toLowerCase()]||NB[e.w.toLowerCase()]||{w:e.w,tr:'',ex:'',ph:''};
+      byKey[k]={key:k, e:e, nb:n, err:x}; items.push(byKey[k]);
+    });
+    return {items:items, total:ERR.length, gaps:gaps, err:{book:book,log:log}};
   }
   function rec(k){ var a=RV.all(); return has(a,k)?a[k]:null; }
   function trOf(k){ var r=rec(k); return r&&r.e&&typeof r.e==='object'?r.e:null; }
@@ -220,10 +256,11 @@
     $('fmtNote').textContent=FMT==='c'?'四选一：看释义认出这个词。只说明「认得出」，不改变英义回忆的等级；选错的词会排进今天的输入练习。'
       :'自己输入：看释义想出并拼出这个词，这才算「能回忆」。选择题可以先熟悉，再用这里检验。';
     var nGap=P.gaps.phrase.length+P.gaps.pending.length;
-    $('cover').textContent='本范围生词 '+P.total+' 条，其中 '+P.items.length+' 个词有逐条审核过的英文释义，可以出题'+(nGap?'；'+nGap+' 条暂不出题':'')+'。';
+    $('cover').textContent=P.err?('错题库共 '+P.total+' 个词（错词本 '+P.err.book+' · 每日错词记录 '+P.err.log+'，各设备同步合并），其中 '+P.items.length+' 个有逐条审核过的英文释义，可以出题'+(nGap?'；'+nGap+' 个暂不出题':'')+'。'+(P.items.length?'':'答错的生词本单词会自动进来。'))
+      :'本范围生词 '+P.total+' 条，其中 '+P.items.length+' 个词有逐条审核过的英文释义，可以出题'+(nGap?'；'+nGap+' 条暂不出题':'')+'。';
     $('gapBox').hidden=!nGap;
-    $('gapSum').textContent='暂不出题的 '+nGap+' 条（短语 '+P.gaps.phrase.length+' · 缺少可靠释义 '+P.gaps.pending.length+'）';
-    $('gapList').innerHTML=(P.gaps.pending.length?'<b>缺少可靠释义</b>（多义难定、词形特殊或是缩写）：'+esc(P.gaps.pending.join('、'))+'<br>':'')+
+    $('gapSum').textContent='暂不出题的 '+nGap+' 条（短语 '+P.gaps.phrase.length+' · '+(P.err?'不在英义题库 ':'缺少可靠释义 ')+P.gaps.pending.length+'）';
+    $('gapList').innerHTML=(P.gaps.pending.length?(P.err?'<b>不在英义题库</b>（题库只收生词本里逐条审核过释义的词，Part 1 / 真经 / 场景的词多数还没有）：':'<b>缺少可靠释义</b>（多义难定、词形特殊或是缩写）：')+esc(P.gaps.pending.join('、'))+'<br>':'')+
       (P.gaps.phrase.length?'<b>短语 / 搭配</b>（答案写法太多，第一版不出题）：'+esc(P.gaps.phrase.join('、')):'');
     var due=0, wk=0, fresh=0, ever=0, steady=0;
     P.items.forEach(function(it){ var tr=trOf(it.key);
@@ -474,7 +511,21 @@
     $('dispute').hidden=true; $('dunclear').hidden=true;
     saveSess();
   }
-  function next(){ S.i++; show(); }
+  // A wrong answer goes into 每日错词记录 (shared, synced) once it can no longer be marked
+  // 「我的答案也合理」: practice when moving on, test when the result table is closed.
+  var BAD={none:1,spell:1,syn:1};
+  function logMistakes(){
+    if(!S||!window.IELTSMistakes) return;
+    var changed=false;
+    S.res.forEach(function(r){
+      if(r.logged||!BAD[r.code]) return;
+      var e=E.entries[r.k]; if(!e) return; r.logged=1; changed=true;
+      var d=e.defs[r.def]||e.defs[0];
+      try{ IELTSMistakes.record({en:e.w,zh:d.zh},'edef',r.fmt==='c'?'echoice':'erecall',r.typed||''); }catch(x){}
+    });
+    if(changed) saveSess();
+  }
+  function next(){ if(S.mode==='p') logMistakes(); S.i++; show(); }
 
   /* ---------- results ---------- */
   function summarize(list){
@@ -517,6 +568,7 @@
     r.code='skip'; r.reason='accept'; finish();
   };
   function close(){
+    logMistakes();
     $('ov').classList.remove('show'); keepAwake(false); try{ speechSynthesis.cancel(); }catch(e){}
     $('mnext').textContent='下一题 ›'; $('mnext').onclick=next;
     cur=null; paint();
@@ -570,6 +622,7 @@
     if(ev.key==='Escape') $('dclose').click();
   });
   window.addEventListener('ielts:pulled',function(){ if(!$('ov').classList.contains('show')) paint(); });
+  window.addEventListener('pagehide',function(){ if(S&&S.mode==='p') logMistakes(); });
   paint();
   // Test hooks for release-tools/test-edef.cjs
   window.__edef={pool:pool,practiceList:practiceList,state:function(){ return S; }};

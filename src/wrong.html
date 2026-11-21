@@ -154,7 +154,7 @@ button{-webkit-tap-highlight-color:transparent}
   /* ---------- helpers ---------- */
   function esc(s){ return (s||"").replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function fmtd(ts){ if(!ts) return ""; var d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate(); }
-  var SRCN={p1:"Part 1",vj:"词汇真经",scene:"听力场景",nb:"生词本"};
+  var SRCN={p1:"Part 1",vj:"词汇真经",scene:"听力场景",gre:"GRE",nb:"生词本"};
   function srcName(s){ return SRCN[s]||s||"听写"; }
   function keyOf(e){ return (e.en||"").toLowerCase(); }
   function findE(k){ for(var i=0;i<WR.length;i++) if(keyOf(WR[i])===k) return WR[i]; return null; }
@@ -171,7 +171,7 @@ button{-webkit-tap-highlight-color:transparent}
     $('count').textContent='';
     var c=document.createElement('span'); c.innerHTML='共 <b>'+WR.length+'</b> 个错词'+(q?('（筛出 '+rows.length+'）'):'')+'　·　'+SORTS[sortI][0];
     $('count').appendChild(c);
-    if(!WR.length){ $('list').innerHTML='<div class="empty"><span class="big">🎯</span>还没有错词。<br>去三个词库里做 ✍️ 听写，拼错的词会自动收到这里。</div>'; return; }
+    if(!WR.length){ $('list').innerHTML='<div class="empty"><span class="big">🎯</span>还没有错词。<br>去各词库里做 ✍️ 听写或选择题，答错的词会自动收到这里。</div>'; return; }
     $('list').innerHTML=rows.map(function(e){
       var media=mediaInline(e.en,30);
       return '<div class="item" data-k="'+esc(keyOf(e))+'">'+

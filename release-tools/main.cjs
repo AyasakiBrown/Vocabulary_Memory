@@ -1,4 +1,4 @@
-const {app, BrowserWindow, session, Menu, ipcMain, dialog, shell} = require('electron');
+const {app, BrowserWindow, session, Menu, ipcMain, dialog, shell, screen} = require('electron');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 
@@ -9,24 +9,45 @@ app.setName('IELTSVocab');
 // Stable across archive names and version changes; preserves the v1.0.2 profile.
 app.setPath('userData', path.join(app.getPath('appData'), 'IELTSVocab'));
 app.commandLine.appendSwitch('lang', 'zh-CN');
+// Windows: one taskbar identity for the window and anything pinned (otherwise it groups as a generic Electron app)
+if (typeof process !== 'undefined' && process.platform === 'win32' && app.setAppUserModelId) app.setAppUserModelId('com.local.ieltsvocab');
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   let win;
   app.on('second-instance', () => { if (win) { win.restore(); win.focus(); } });
   app.whenReady().then(() => {
     const store = new DataStore(app.getPath('userData'));
-    const pages = ['index', 'review', 'edef', 'p1', 'vj', 'scene', 'notebook', 'wrong'];
+    const pages = ['index', 'review', 'edef', 'gre', 'p1', 'vj', 'scene', 'notebook', 'wrong'];
     const urls = pages.map(p => pathToFileURL(path.join(__dirname, 'src', p + '.html')).href);
     session.defaultSession.webRequest.onBeforeRequest({urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*']}, (_, callback) => callback({cancel: true}));
     // Only the microphone, only for our own pages (生词本 口语练习 records for local playback).
-    const ownPage = url => urls.some(u => String(url || '').split('#')[0] === u);
+    // our pages are recognised without their #fragment or ?query (the home page opens the GRE map as gre.html#game)
+    const bare = url => String(url || '').split(/[?#]/)[0];
+    const ownPage = url => urls.includes(bare(url));
     session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) =>
       callback(permission === 'media' && ownPage(details.requestingUrl) && (details.mediaTypes || []).every(t => t === 'audio')));
     session.defaultSession.setPermissionCheckHandler((wc, permission, origin, details) => permission === 'media' && details?.mediaType === 'audio' && ownPage(details.requestingUrl));
-    win = new BrowserWindow({width: 800, height: 940, minWidth: 380, minHeight: 560,
-      title: '雅思词汇听写合集', icon: path.join(__dirname, 'src', 'icon-512.png'),
+    // fit the window on small laptop screens (1366×768 leaves ~728 px above the taskbar), and reopen where it was left
+    let area = {width: 800, height: 940};
+    try { if (screen && screen.getPrimaryDisplay) area = screen.getPrimaryDisplay().workAreaSize; } catch {}
+    const stateFile = path.join(app.getPath('userData'), 'window-state.json');
+    let last = null, place = {};
+    try { last = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch {}
+    if (last && [last.x, last.y, last.width, last.height].every(Number.isFinite)) {
+      try {     // only if that spot is still on a screen (a monitor may have been unplugged)
+        const wa = screen.getDisplayMatching(last).workArea;
+        const seen = Math.min(last.x + last.width, wa.x + wa.width) - Math.max(last.x, wa.x) >= 120 && Math.min(last.y + last.height, wa.y + wa.height) - Math.max(last.y, wa.y) >= 80;
+        if (seen) place = {x: last.x, y: last.y, width: Math.min(Math.max(380, last.width), wa.width), height: Math.min(Math.max(560, last.height), wa.height)};
+      } catch {}
+    }
+    win = new BrowserWindow({width: Math.min(800, area.width), height: Math.min(940, area.height), ...place, minWidth: 380, minHeight: 560,
+      title: 'Vocabulary Memory', icon: path.join(__dirname, 'src', 'icon-512.png'),
       webPreferences: {preload:path.join(__dirname,'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true}});
-    const allowed = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame && urls.includes(event.senderFrame.url);
+    if (last && last.max && win.maximize) win.maximize();
+    if (win.on) win.on('close', () => {
+      try { fs.mkdirSync(path.dirname(stateFile), {recursive: true}); fs.writeFileSync(stateFile, JSON.stringify({...win.getNormalBounds(), max: win.isMaximized()})); } catch {}
+    });
+    const allowed = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame && ownPage(event.senderFrame.url);
     ipcMain.on('learning-data',(event,action,payload)=>{
       if(!allowed(event)) {event.returnValue={ok:false,error:'页面无权访问学习数据'};return;}
       try {
@@ -78,10 +99,11 @@ else {
       finally{dataBusy=false;}
     }
     ipcMain.on('learning-data-action',(event,action)=>{if(allowed(event))void dataAction(action);});
-    win.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
-    win.webContents.on('will-navigate', (event, url) => { if (!urls.includes(url)) event.preventDefault(); });
+    // Online dictionary links (GRE word details) go to the system browser; the app window never leaves its own pages.
+    win.webContents.setWindowOpenHandler(({url}) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return {action: 'deny'}; });
+    win.webContents.on('will-navigate', (event, url) => { if (!ownPage(url)) { event.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } });
     win.webContents.on('will-attach-webview', event => event.preventDefault());
-    const labels = ['主页', '今日复习', '英义猜词', 'Part 1 高频词', '词汇真经', '听力场景词汇', '生词本', '错词本'];
+    const labels = ['主页', '今日复习', '英义猜词', 'GRE 核心词汇', 'Part 1 高频词', '词汇真经', '听力场景词汇', '生词本', '错词本'];
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       {label: '词库', submenu: pages.map((_, i) => ({label: labels[i], click: () => win.loadURL(urls[i])}))},
       {label: '学习数据', submenu: [{label:'学习记录与数据转移',click:()=>win.webContents.executeJavaScript('window.showLearningData()')},{label:'导出完整备份…',click:()=>dataAction('export')},{label:'从备份恢复…',click:()=>dataAction('import')},{label:'从最近的有效备份恢复…',click:()=>dataAction('latest')},{label:'打开自动备份目录',click:()=>dataAction('folder')}]},

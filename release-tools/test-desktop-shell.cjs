@@ -10,9 +10,9 @@ test('Windows 菜单逐项打开对应页面，数据桥拒绝外部页面和子
     fs.mkdirSync(path.join(dir,'src'));
     fs.copyFileSync(path.join(__dirname,'../src/learning-data.js'),path.join(dir,'src/learning-data.js'));
     fs.copyFileSync(path.join(__dirname,'data-store.cjs'),path.join(dir,'data-store.cjs'));
-    const ipc={},paths={appData:dir},hooks={};let win,menu;
+    const ipc={},paths={appData:dir},hooks={},wcOn={};let win,menu;
     class Window {
-      constructor(){win=this;this.webContents={mainFrame:{url:''},on(){},setWindowOpenHandler(){}};}
+      constructor(){win=this;this.webContents={mainFrame:{url:''},on:(name,fn)=>wcOn[name]=fn,setWindowOpenHandler(){}};}
       loadURL(url){this.webContents.mainFrame.url=url;return Promise.resolve();}
     }
     const electron={
@@ -27,8 +27,8 @@ test('Windows 菜单逐项打开对应页面，数据桥拒绝外部页面和子
     });
     await Promise.resolve();
     const entries=menu.template.find(m=>m.label==='词库').submenu;
-    const pages=['index','review','edef','p1','vj','scene','notebook','wrong'];
-    const labels=['主页','今日复习','英义猜词','Part 1 高频词','词汇真经','听力场景词汇','生词本','错词本'];
+    const pages=['index','review','edef','gre','p1','vj','scene','notebook','wrong'];
+    const labels=['主页','今日复习','英义猜词','GRE 核心词汇','Part 1 高频词','词汇真经','听力场景词汇','生词本','错词本'];
     assert.equal(entries.length,pages.length);
     for(let i=0;i<pages.length;i++) {
       assert.equal(entries[i].label,labels[i]);entries[i].click();
@@ -41,6 +41,11 @@ test('Windows 菜单逐项打开对应页面，数据桥拒绝外部页面和子
     assert.equal(call('read').value.decks.notebook.sessions['dict:rw'].draft,'app');
     assert.equal(call('read',null,{sender:{},senderFrame:win.webContents.mainFrame}).ok,false);
     assert.equal(call('read',null,{sender:win.webContents,senderFrame:{url:win.webContents.mainFrame.url}}).ok,false);
+    // the home page opens the GRE map as gre.html#game: that is still our page — it may be opened and may use the data bridge
+    const gre=pathToFileURL(path.join(dir,'src/gre.html')).href;
+    for(const url of [gre+'#game',gre+'?x=1']){ let blocked=false; wcOn['will-navigate']({preventDefault:()=>blocked=true},url); assert.equal(blocked,false,url); }
+    let blocked=false; wcOn['will-navigate']({preventDefault:()=>blocked=true},'file:///etc/hosts'); assert.equal(blocked,true);
+    win.webContents.mainFrame.url=gre+'#game';assert.equal(call('read').ok,true);
     win.webContents.mainFrame.url='https://example.com';assert.equal(call('read').ok,false);
     let granted;
     hooks.request(null,'media',value=>granted=value,{requestingUrl:'https://example.com',mediaTypes:['audio']});assert.equal(granted,false);

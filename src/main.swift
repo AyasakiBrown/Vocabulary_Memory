@@ -2,7 +2,7 @@ import Cocoa
 import WebKit
 import UniformTypeIdentifiers
 
-let APP_NAME = "雅思词汇听写合集"
+let APP_NAME = "Vocabulary Memory"   // shown name only; the data folder stays DATA_DIR
 let DATA_DIR = "IELTSVocab"
 var reportDataError: ((String) -> Void)?
 var reportCorrupt: (() -> Void)?
@@ -258,7 +258,7 @@ func withDataLock(_ body: () -> Void) {
 // server.py _usable(). Valid JSON with the wrong shape (decks as a list, a word list that
 // is not a list, a deck that is a string…) counts as damaged: merging into it would either
 // crash a page or quietly replace the broken part with an empty one.
-let DECK_NAMES: Set<String> = ["p1", "vj", "scene", "notebook", "wrong", "srs", "stats", "config"]
+let DECK_NAMES: Set<String> = ["p1", "vj", "scene", "gre", "notebook", "wrong", "srs", "stats", "config"]
 func isCount(_ v: Any?) -> Bool {
     guard let n = v as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() else { return false }
     let d = n.doubleValue
@@ -459,6 +459,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        // Online dictionary links (GRE word details) open in the default browser, never inside the app.
+        if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url, ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
+            decisionHandler(.cancel); NSWorkspace.shared.open(url); return
+        }
         if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url, url.isFileURL {
             decisionHandler(.cancel); loadResource(url.deletingPathExtension().lastPathComponent); return
         }
@@ -585,6 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     @objc func goP1()    { loadResource("p1") }
     @objc func goVj()    { loadResource("vj") }
     @objc func goScene() { loadResource("scene") }
+    @objc func goGre() { loadResource("gre") }
     @objc func goNotebook() { loadResource("notebook") }
     @objc func goWrong() { loadResource("wrong") }
 
@@ -606,6 +611,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo,
                  type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
         decisionHandler(type == .microphone && frame.isMainFrame && (webView.url?.isFileURL ?? false) ? .grant : .deny)
+    }
+
+    // target="_blank" links: hand web addresses to the default browser instead of opening a window.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if let url = navigationAction.request.url, ["http", "https"].contains(url.scheme?.lowercased() ?? "") { NSWorkspace.shared.open(url) }
+        return nil
     }
 
     // MARK: - WKUIDelegate — JS alert/confirm/prompt → native NSAlert.
@@ -696,6 +707,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let today = deckMenu.addItem(withTitle: "📅 今日复习", action: #selector(goReview), keyEquivalent: ""); today.target = self
         let edef = deckMenu.addItem(withTitle: "🔤 英义猜词", action: #selector(goEdef), keyEquivalent: ""); edef.target = self
         deckMenu.addItem(.separator())
+        let gre = deckMenu.addItem(withTitle: "🎓 GRE 核心词汇", action: #selector(goGre), keyEquivalent: ""); gre.target = self
         let m1 = deckMenu.addItem(withTitle: "① Part 1 高频词", action: #selector(goP1), keyEquivalent: ""); m1.target = self
         let m2 = deckMenu.addItem(withTitle: "② 词汇真经", action: #selector(goVj), keyEquivalent: ""); m2.target = self
         let m3 = deckMenu.addItem(withTitle: "③ 听力场景词汇", action: #selector(goScene), keyEquivalent: ""); m3.target = self

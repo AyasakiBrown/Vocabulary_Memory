@@ -16,7 +16,7 @@ const root=path.resolve(__dirname,'../src');
   browser=await chromium.launch({channel:'chrome',headless:true});
   const context=await browser.newContext();let page=await context.newPage();
   const errors=[]; const attach=p=>p.on('pageerror',e=>errors.push(e.message));attach(page);
-  for(const deck of ['p1','vj','scene']){
+  for(const deck of ['p1','vj','scene','gre']){
    await page.goto(base+'/'+deck+'.html');
    for(const order of ['seq','shuffle','smart']){
     await page.evaluate(order=>{settings.order=order;settings.auto=false;saveSettings();enterMode('flash',true);flashNext(1);flashNext(1);},order);
@@ -70,11 +70,11 @@ const root=path.resolve(__dirname,'../src');
   // A confirmed restore leaves the current page. Its pagehide handler must not
   // save the old progress/list back over the restored data; the new page then
   // consumes the marker and clears the previous review session and stats.
-  for(const deck of ['p1','vj','scene','notebook','review']){
+  for(const deck of ['p1','vj','scene','gre','notebook','review']){
    await page.goto(base+'/'+deck+'.html');
    await page.addScriptTag({path:path.join(root,'learning-data.js')});
    await page.evaluate(deck=>{
-    if(['p1','vj','scene'].includes(deck))enterMode('dict',true);
+    if(['p1','vj','scene','gre'].includes(deck))enterMode('dict',true);
     else if(deck==='notebook'){NB=[{id:'a',w:'apple',tr:'苹果',rw:true}];openDictate('rw');}
     else {RV.answer({w:'restorecheck',tr:'恢复测试',src:'p1'},'d','bad');begin(RV.queue().filter(x=>x.track==='d'));}
     window.__restorePosts=[];window.webkit={messageHandlers:{persist:{postMessage:s=>window.__restorePosts.push(s)}}};

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Build the unified "雅思词汇听写合集" macOS app (3 decks + one local data file).
+# Build the "Vocabulary Memory" macOS app (formerly 雅思词汇听写合集; the data folder is still IELTSVocab).
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 SRC="$DIR/src"
-APP="$DIR/雅思词汇听写合集.app"
+APP="$DIR/Vocabulary Memory.app"
 
 echo "Building $APP ..."
 rm -rf "$APP"
@@ -44,6 +44,19 @@ page=open(sys.argv[1],encoding='utf-8').read()
 assert '<script src="edef.js"></script>' in page
 open(sys.argv[3],'w',encoding='utf-8').write(page.replace('<script src="edef.js"></script>', '<script>\n'+open(sys.argv[2],encoding='utf-8').read()+'\n</script>'))
 print('  edef.html: question bank inlined')
+PY
+# GRE word bank: inlined the same way.
+python3 - "$SRC/gre.html" "$SRC/gre.js" "$APP/Contents/Resources/gre.html" "$SRC/gre-paraphrases.js" "$SRC/gre-synonym-groups.js" "$SRC/gre-synonyms.js" <<'PY'
+import sys
+page=open(sys.argv[1],encoding='utf-8').read()
+assert '<script src="gre.js"></script>' in page
+page=page.replace('<script src="gre.js"></script>', '<script>\n'+open(sys.argv[2],encoding='utf-8').read()+'\n</script>')
+for filename in sys.argv[4:]:
+    name=filename.rsplit('/',1)[-1]
+    assert f'<script src="{name}"></script>' in page
+    page=page.replace(f'<script src="{name}"></script>', '<script>\n'+open(filename,encoding='utf-8').read()+'\n</script>')
+open(sys.argv[3],'w',encoding='utf-8').write(page)
+print('  gre.html: word bank, sense paraphrases and synonym groups inlined')
 PY
 cp "$SRC/learning-data.js" "$APP/Contents/Resources/learning-data.js"
 cp "$SRC/mistakes.js" "$APP/Contents/Resources/mistakes.js"

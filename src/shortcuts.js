@@ -6,7 +6,7 @@
   const actions = [
     ['home','主页',mod+'+Digit0'], ['review','今日复习',mod+'+Digit6'], ['p1','Part 1 高频词',mod+'+Digit1'],
     ['vj','词汇真经',mod+'+Digit2'], ['scene','听力场景词汇',mod+'+Digit3'],
-    ['notebook','生词本',mod+'+Digit4'], ['wrong','错词本',mod+'+Digit5'],
+    ['notebook','生词本',mod+'+Digit4'], ['wrong','错词本',mod+'+Digit5'], ['gre','GRE 核心词汇',mod+'+Digit7'],
     ['zoomIn','放大字号',mod+'+Shift+Equal'], ['zoomOut','缩小字号',mod+'+Minus'],
     ['zoomReset','恢复字号',mod+'+Shift+Digit0'],
     ['replay','重听当前词','Alt+KeyR'], ['next','下一题 / 跳过','Alt+ArrowRight'],
@@ -112,7 +112,7 @@
     const overlay=[...document.querySelectorAll('.ov.show, .modal.show')].pop();
     const scope=overlay||document;
     const typing=document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
-    const pages={home:'index',review:'review',p1:'p1',vj:'vj',scene:'scene',notebook:'notebook',wrong:'wrong'};
+    const pages={home:'index',review:'review',p1:'p1',vj:'vj',scene:'scene',gre:'gre',notebook:'notebook',wrong:'wrong'};
     if(pages[id]) { location.href=pages[id]+'.html';return true; }
     if(id==='settings') {window.openShortcutSettings();return true;}
     if(id.startsWith('zoom')) {
@@ -126,7 +126,7 @@
     }
     if(id==='close' && !overlay)return false;
     if(id==='flip' && typing)return false;
-    let ids={replay:['dsay','rsay','msay','xsay','dReplay','fSpeak'],next:['dskip','rnext','mnext','xnext','dSkip','fNext','qNext'],previous:['rprev','fPrev'],close:['dclose','rclose','mclose','xclose','closeModal'],flip:['rflip','flash']}[id]||[];
+    let ids={replay:['dsay','rsay','msay','xsay','dReplay','fSpeak','qSay','qxSay'],next:['dskip','rnext','mnext','xnext','dSkip','fNext','qNext','cNext'],previous:['rprev','fPrev'],close:['dclose','rclose','mclose','xclose','closeModal'],flip:['rflip','flash','qSay','qxSay']}[id]||[];
     if(id==='submit') {const focus=document.activeElement?.id; ids=focus==='w'?['add']:focus==='dictInput'?['dSubmit']:focus==='dans'?['dsubmit']:focus==='xans'?['xsubmit']:[];}
     const button=ids.map(x=>scope.querySelector('#'+x)).find(visible);
     if(button){button.click();return true;}return false;

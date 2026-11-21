@@ -1,6 +1,16 @@
-# 雅思词汇听写合集
+# Vocabulary Memory（原名：雅思词汇听写合集）
 
 本地离线词汇练习工具，包含 Part 1 高频词、词汇真经、听力场景词汇、生词本及错词本；生词支持听力、阅读、写作、口语分类和专项练习。
+
+## v2.0.0 更新（2026-11-21）
+
+- 推出 Vocabulary Memory 2.0 桌面应用，配备新版 macOS 和 Windows 图标。
+- 新增 GRE 核心词汇，按 30 个 List 练习 2,902 个词条。支持单词卡、听写、选择题、语境填空、同义串记和逐义改写。
+- 新增 GRE 词汇星图，包含极速点亮、极速重燃、听词回想、备考计划和断点续练。
+- 今日复习可按 GRE、雅思或全部词汇筛选；英义猜词新增错题库。
+- 修复 Windows 首页星图入口，并在重开应用时恢复窗口位置及大小。
+
+本版为桌面离线测试版。升级沿用现有学习记录。Windows 真机、Intel Mac 实机与真实语音流程待验收。
 
 ## v1.1.6 更新（2026-10-25）
 
@@ -22,7 +32,7 @@
 
 ## 下载与运行
 
-- macOS：解压 macOS-universal 包，把「雅思词汇听写合集.app」拖到应用程序目录。支持 macOS 13 及以上、Apple Silicon 和 Intel。使用本地 ad-hoc 签名，未经过 Apple 公证；首次打开可能被系统拦截，请在确认下载来源后使用系统「隐私与安全性」中的打开选项。
+- macOS：解压 macOS-universal 包，把「Vocabulary Memory.app」拖到应用程序目录。支持 macOS 13 及以上、Apple Silicon 和 Intel。使用本地 ad-hoc 签名，未经过 Apple 公证；首次打开可能被系统拦截，请在确认下载来源后使用系统「隐私与安全性」中的打开选项。
 - Windows：解压 Windows-x64 包，双击 IELTSVocab.exe。保留整个解压文件夹，不能单独移动 exe。内置 Electron，无需安装 Python 或 Node.js。面向 Windows 10/11 x64；未做发布者签名，系统可能显示未知发布者。此包在 Mac 上组装，Windows 真机运行、发音和重启保存仍待验证。
 - 发音依赖系统提供的英语语音。离线发音需要已安装本地英语语音包。
 
@@ -67,7 +77,7 @@ Mac 数据存放在当前用户的 `~/Library/Application Support/IELTSVocab/dat
 
 ## 从源码构建
 
-在安装 Xcode 命令行工具、Python 3、curl 的 Mac 上执行：
+在安装 Xcode 命令行工具、Python 3、curl 和 Node.js/npm 的 Mac 上执行：
 
 ```sh
 python3 release-tools/build_release.py
@@ -75,7 +85,7 @@ python3 release-tools/build_release.py
 
 本机开发构建（只生成当前架构的 Mac 应用）：`./build.sh`。
 
-测试：`node release-tools/test-srs.cjs`、`node --test release-tools/test-learning-data.cjs release-tools/test-desktop-shell.cjs`、`python3 release-tools/test_native_data.py`；界面测试（`test-mistakes.cjs` 等）需要 Playwright 与本机 Chrome。Mac 上可用 `python3 release-tools/test_native_smoke.py /路径/雅思词汇听写合集.app` 检查已构建应用的实际 WKWebView 页面加载、脚本及返回生词本；本机开发目录运行 `./build.sh` 后可省略应用路径。该测试使用临时数据目录与临时网页存储。`test-desktop-shell.cjs` 使用模拟 Electron API，不替代 Windows 真机验收。
+测试：`node release-tools/test-srs.cjs`、`node --test release-tools/test-learning-data.cjs release-tools/test-desktop-shell.cjs`、`python3 release-tools/test_native_data.py`；界面测试（`test-mistakes.cjs` 等）需要 Playwright 与本机 Chrome。Mac 上可用 `python3 release-tools/test_native_smoke.py /路径/Vocabulary Memory.app` 检查已构建应用的实际 WKWebView 页面加载、脚本及返回生词本；本机开发目录运行 `./build.sh` 后可省略应用路径。该测试使用临时数据目录与临时网页存储。`test-desktop-shell.cjs` 使用模拟 Electron API，不替代 Windows 真机验收。
 
 `test-production.cjs` 检查写作错词明细、重新开练的按钮状态，以及模拟麦克风的延迟授权、关闭、换题和资源释放；`test-session-resume.cjs` 同时检查恢复备份时旧页面不会回写进度，统计缓存和今日复习断点随恢复重置。模拟录音测试不替代真实麦克风验收。
 

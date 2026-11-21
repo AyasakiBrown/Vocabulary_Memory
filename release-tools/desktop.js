@@ -4,7 +4,7 @@
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   };
   let decks = {};
-  for (const deck of ['p1', 'vj', 'scene']) {
+  for (const deck of ['p1', 'vj', 'scene', 'gre']) {
     decks[deck] = {};
     for (const field of ['prog', 'daily', 'settings']) {
       decks[deck][field] = read('ielts_' + deck + '_' + field, field === 'daily' ? {date:'',done:0,ok:0} : {});
@@ -59,7 +59,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const intro = document.querySelector('header p');
     if (!document.getElementById('zoombox')) return;
-    if (intro) intro.textContent = '三个词库合在一个 App 里，进度自动保存在本机。菜单「词库」可切换页面；在「帮助 → 快捷键设置」中自定义键位。';
+    if (intro) intro.textContent = '雅思三个词库和 GRE 核心词汇合在一个 App 里，进度自动保存在本机。菜单「词库」可切换页面；在「帮助 → 快捷键设置」中自定义键位。';
     for (const label of document.querySelectorAll('#zoombox b')) {
       label.textContent = label.textContent.replace('⌘', 'Ctrl + ');
     }

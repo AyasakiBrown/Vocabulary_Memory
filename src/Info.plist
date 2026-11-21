@@ -7,15 +7,15 @@
     <key>CFBundleLocalizations</key>
     <array><string>zh-Hans</string></array>
     <key>CFBundleName</key>
-    <string>雅思词汇听写合集</string>
+    <string>Vocabulary Memory</string>
     <key>CFBundleDisplayName</key>
-    <string>雅思词汇听写合集</string>
+    <string>Vocabulary Memory</string>
     <key>CFBundleIdentifier</key>
     <string>com.local.ieltsvocab</string>
     <key>CFBundleVersion</key>
-    <string>1.1.6</string>
+    <string>2.0.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.6</string>
+    <string>2.0.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>

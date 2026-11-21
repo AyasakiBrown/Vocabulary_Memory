@@ -3,8 +3,8 @@
   'use strict';
   if(scope.IELTSMistakes) return;
   const KEY='ielts_wrong_events';
-  const sources={p1:'Part 1',vj:'词汇真经',scene:'听力场景',notebook:'生词本',wrong:'错词本'};
-  const modes={dict:'听写',quiz:'选择题',wcloze:'搭配填空',wprompt:'看中文写'};
+  const sources={p1:'Part 1',vj:'词汇真经',scene:'听力场景',gre:'GRE',notebook:'生词本',wrong:'错词本',edef:'英义猜词',review:'今日复习'};
+  const modes={dict:'听写',quiz:'选择题',wcloze:'搭配填空',wprompt:'看中文写',echoice:'英义选择',erecall:'英义输入'};
   const pad=n=>String(n).padStart(2,'0');
   const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   function read(){

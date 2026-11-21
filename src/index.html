@@ -5,7 +5,7 @@
 <script src="srs.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>雅思词汇听写 · 合集</title>
+<title>Vocabulary Memory</title>
 <style>
   :root{
     --bg:#f5f6f8; --card:#ffffff; --ink:#1d2330; --soft:#6b7280; --line:#e5e7eb;
@@ -21,6 +21,8 @@
        -webkit-font-smoothing:antialiased;}
   .wrap{max-width:680px;margin:0 auto;padding:38px 20px 48px}
   header h1{margin:0 0 6px;font-size:25px;letter-spacing:.3px}
+  header h1{display:flex;align-items:center;gap:10px}
+  header .logo{width:34px;height:34px;flex:0 0 auto;border-radius:8px;box-shadow:0 2px 6px rgba(21,26,79,.28)}
   header p{margin:0;color:var(--soft);font-size:13.5px;line-height:1.6}
   .grid{display:flex;flex-direction:column;gap:14px;margin-top:26px}
   a.card{display:block;text-decoration:none;color:inherit;background:var(--card);
@@ -44,8 +46,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>📚 雅思词汇听写 · 合集</h1>
-    <p>三个词库合在一个 App 里 · 进度自动保存到本地一个文件，可与 IELTS Daily Tracker 同步。<br>菜单栏「词库」可切换页面；在「帮助 → 快捷键设置」中自定义键位。</p>
+    <h1><svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="lgBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2470"/><stop offset=".55" stop-color="#151a4f"/><stop offset="1" stop-color="#2a1660"/></linearGradient><linearGradient id="lgGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a"/><stop offset=".6" stop-color="#ffc34d"/><stop offset="1" stop-color="#ff8f3f"/></linearGradient></defs><rect width="1024" height="1024" rx="230" fill="url(#lgBg)"/><path d="M281 307 L512 776 L743 307" fill="none" stroke="url(#lgGold)" stroke-width="140" stroke-linecap="round" stroke-linejoin="round"/><path d="M512 165 C531 274 531 274 636 293 C531 312 531 312 512 421 C493 312 493 312 388 293 C493 274 493 274 512 165Z" fill="#fffaf0"/></svg>Vocabulary Memory</h1>
+    <p>雅思三个词库和 GRE 核心词汇合在一个 App 里 · 进度自动保存到本地一个文件，可与 IELTS Daily Tracker 同步。<br>菜单栏「词库」可切换页面；在「帮助 → 快捷键设置」中自定义键位。</p>
   </header>
 
   <div class="grid" id="grid"></div>
@@ -57,7 +59,7 @@
       <button id="zReset" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer;font-size:13px">重置</button>
       <button id="zPlus" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer;font-size:19px">A+</button>
     </div>
-    <div style="font-size:11.5px;color:var(--soft);margin-top:9px">整体缩放,点一下立即全局生效(三个词库 + 生词本都跟着变)。也可用菜单「显示」或自行设置的缩放快捷键。</div>
+    <div style="font-size:11.5px;color:var(--soft);margin-top:9px">整体缩放,点一下立即全局生效(各词库 + 生词本都跟着变)。也可用菜单「显示」或自行设置的缩放快捷键。</div>
   </div>
 
   <footer>
@@ -68,6 +70,7 @@
 
 <script>
   var DECKS=[
+    {k:'gre',   file:'gre.html',   ico:'🎓', name:'GRE 核心词汇',     desc:'新东方《一本通》· 全书串记与用法辨析 · 30 个 List', total:2902, grad:'linear-gradient(135deg,#0f766e,#0e7490)'},
     {k:'p1',    file:'p1.html',    ico:'①', name:'Part 1 高频词',   desc:'职业 · 房屋 · 服务 · 衣物',          total:357},
     {k:'vj',    file:'vj.html',    ico:'②', name:'词汇真经',         desc:'刘洪波 · 22 章场景词汇',            total:3621},
     {k:'scene', file:'scene.html', ico:'③', name:'听力场景词汇',     desc:'住宿/旅游/求职/医疗… 13 个场景',     total:1217}
@@ -88,7 +91,7 @@
     var a=document.createElement('a');
     a.className='card'; a.href=d.file;
     a.innerHTML=
-      '<div class="top"><div class="ico">'+d.ico+'</div>'+
+      '<div class="top"><div class="ico"'+(d.grad?' style="background:'+d.grad+'"':'')+'>'+d.ico+'</div>'+
       '<div><p class="name">'+d.name+'</p><p class="desc">'+d.desc+' · '+d.total+' 词</p></div>'+
       '<div class="arrow">›</div></div>'+
       '<div class="barwrap"><div class="bar" style="width:'+pct+'%"></div></div>'+
@@ -110,8 +113,8 @@
   function reviewCard(){
     var RV=window.IELTSReview; if(!RV) return null;
     try{ RV.reload(); }catch(e){}
-    var s=RV.summary(), n=s.due;
-    var line=n?('待复习 <b>'+n+'</b> 词'+(s.again?'（含今天答错待重测 '+s.again+'）':''))
+    var s=RV.summary(), n=s.due, sc=s.scope&&s.scope!=='all'?(s.scope==='gre'?'GRE ':'雅思 '):'';
+    var line=n?(sc+'待复习 <b>'+n+'</b> 词'+(s.again?'（含今天答错待重测 '+s.again+'）':''))
               :(s.tracked?'今天到期的词已复习完 🎉':'做一次听写或选择题后，答过的词会自动排进复习');
     var a=bookCard('review.html','📅','linear-gradient(135deg,#2563eb,#7c3aed)','今日复习',
       '先完成到期复习，再学新词 · 隔天答对才算记住',
@@ -119,10 +122,41 @@
     if(n) a.style.borderColor='var(--accent)';
     return a;
   }
+  // 🌌 GRE 词汇星图: the game keeps a snapshot of its lit stars; whether they have dimmed comes from the review record (srs.js)
+  function starCard(){
+    var RV=window.IELTSReview, G=null, d=deckData('gre');
+    try{ G=d&&d.settings&&d.settings.game||null; }catch(e){}
+    try{ var l=JSON.parse(localStorage.getItem('ielts_gre_settings')||'null'); if(l&&l.game&&l.game.snap&&(!G||!G.snap||(l.game.snap.t||0)>(G.snap.t||0))) G=l.game; }catch(e){}
+    var sn=G&&G.snap, today=RV&&RV.dayNo?RV.dayNo():0, left, right='', dim=0, hot=false;
+    if(!sn||!sn.lit){ left='还没开始 · 点亮你的第一颗星'; hot=true; }
+    else{
+      var choice=sn.light==='choice';
+      if(RV) sn.lit.forEach(function(en){
+        var a=RV.info(en,'d'), b=RV.info(en,'m'), dOn=a.stage!=='new', mOn=b.stage!=='new';
+        var lv=choice?Math.max(dOn?a.lv:0,mOn?b.lv:0):(dOn?a.lv:0);
+        if(lv>=1&&((!choice&&dOn&&a.isDue)||(mOn&&b.isDue))) dim++;
+      });
+      left=dim?('<b>'+dim+'</b> 颗星变暗，等你重燃'):('已点亮 <b>'+sn.lit.length+'</b> 颗 · 没有变暗的星');
+      // today's goal: stars lit today (counted by the map, reset each day) against the daily goal
+      var dl=G.day&&G.day.d===today?(G.day.lit||0):0, goal=+G.goal||16;
+      left+=dl>=goal?(' · ✓ 今日 <b>'+dl+'</b> / '+goal):(' · 今日 <b>'+dl+'</b> / '+goal);
+      var st=sn.streak||{}, n=st.last>=today-1?(st.n||0):0;
+      right=n?('🔥 连续 <b>'+n+'</b> 天'+(st.last===today?' · 今天已续':' · 今天还没续')):'Lv.'+(sn.lv||1);
+      var em=/^(\d{4})-(\d{2})-(\d{2})$/.exec(sn.exam||''), eleft=em&&RV&&RV.dayNo?RV.dayNo(new Date(+em[1],em[2]-1,+em[3],12).getTime())-today:-1;
+      if(eleft>=0) right='📅 距考试 <b>'+eleft+'</b> 天 · '+right;
+      hot=dim>0||(n>0&&st.last!==today);
+    }
+    var a=bookCard('gre.html#game','🌌','linear-gradient(135deg,#1a2352,#4c3a8f)','GRE 词汇星图',
+      '把《一本通》点亮成星图 · 隔天还记得才会更亮','<span>'+left+'</span>'+(right?'<span>'+right+'</span>':''));
+    if(hot) a.style.borderColor='var(--accent)';
+    // the Mac app opens local links by page name and drops "#game", so also leave a one-time note for gre.html
+    a.addEventListener('click',function(){ try{ sessionStorage.setItem('ielts_gre_open','game'); }catch(e){} try{ localStorage.setItem('ielts_gre_open','game'); }catch(e){} });
+    return a;
+  }
   function renderCards(){
     g.innerHTML='';
     var rc=reviewCard(); if(rc) g.appendChild(rc);
-    DECKS.forEach(function(d){ g.appendChild(card(d)); });
+    DECKS.forEach(function(d){ g.appendChild(card(d)); if(d.k==='gre'){ try{ g.appendChild(starCard()); }catch(e){} } });
     g.appendChild(bookCard('notebook.html','📒','linear-gradient(135deg,#f59e0b,#ef4444)','生词本','练习里不会的词 · 自动配释义+发音 · 到期词优先',
       '<span>已收录 <b>'+listLen('notebook')+'</b> 词</span><span>离线词典 5.8 万</span>'));
     g.appendChild(bookCard('wrong.html','📕','linear-gradient(135deg,#ef4444,#b91c1c)','错词本','答错的词自动收集 · 隔天复测通过再移出',

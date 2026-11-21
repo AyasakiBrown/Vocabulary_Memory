@@ -158,7 +158,8 @@ data.clear(); delete globalThis.__INITIAL_STATE__; RV.reload(); at(70);
 const ev = (word, answer, mode, ts, extra) => Object.assign({word, answer, mode, ts, source: 'notebook', meaning: word + '义', date: '2026-09-27'}, extra);
 data.set('ielts_wrong_events', JSON.stringify({
   a: ev('navigate', 'nevigate', 'dict', 10), b: ev('navigate', 'nevigate', 'dict', 20), c: ev('navigate', 'navigat', 'dict', 30),
-  d: ev('square', 'sqaure', 'dict', 40), e: ev('notable', '合作的', 'quiz', 50, {alt: {w: 'cooperative', zh: '合作的'}}), f: ev('notable', '著名', 'quiz', 60)}));
+  d: ev('square', 'sqaure', 'dict', 40), e: ev('notable', '合作的', 'quiz', 50, {alt: {w: 'cooperative', zh: '合作的'}}), f: ev('notable', '著名', 'quiz', 60),
+  x1: ev('vague', 'vast', 'erecall', 61, {source: 'edef'}), x2: ev('vague', 'obscure', 'echoice', 62, {source: 'edef'})}));   // 英义猜词 misses stay out of spelling drills
 data.set('ielts_wrong', JSON.stringify([{en: 'accommodation', zh: '住宿', n: 3, ts: 5, col: 'student accommodation', src: 'p1'}, {en: 'pear', n: 1, ts: 6}]));
 let tr = RV.troubles({min: 2});
 assert.deepEqual(tr.map(t => [t.key, t.n, t.main]), [['navigate', 3, 'vowel'], ['accommodation', 3, 'spot'], ['notable', 2, 'meaning']]);
@@ -205,10 +206,43 @@ assert.deepEqual(RV.speakOrder(['fluent', 'novel', 'vivid']), ['vivid', 'novel',
 const pm = RV.mergeRec({t: 300, d: {t: 300, lv: 1}, p: {t: 100, lv: 0}}, {t: 200, p: {t: 200, lv: 2}, o: {t: 150, n: 1}});
 assert.equal(pm.p.lv, 2); assert.equal(pm.o.n, 1); assert.equal(pm.d.lv, 1);
 
+// ---- 复习范围: GRE / 雅思 / 全部 ----
+at(300);
+RV.answer({en: 'obdurate', zh: '固执的', src: 'gre'}, 'd', 'bad');
+RV.answer({en: 'commute', zh: '通勤', src: 'scene'}, 'd', 'bad');
+RV.answer({en: 'abate', zh: '减轻', src: 'gre'}, 'm', 'bad');
+RV.answer({en: 'abate', zh: '减轻', src: 'notebook'}, 'm', 'bad');     // studied in both: belongs to both scopes
+const keys = () => new Set(RV.queue({cap: false}).map(x => x.key));
+assert.equal(RV.reviewScope(), 'all');
+let k = keys(); assert.ok(k.has('obdurate') && k.has('commute') && k.has('abate'));
+RV.setReviewScope('gre');
+k = keys(); assert.ok(k.has('obdurate') && k.has('abate') && !k.has('commute'), 'GRE scope');
+assert.ok(RV.queue().every(x => x.rec.src.includes('gre')), 'the capped queue follows the scope too');
+s = RV.summary();
+assert.equal(s.scope, 'gre'); assert.equal(s.due, RV.queue().length);
+assert.ok(s.scopes.gre >= 2 && s.scopes.ielts >= 2 && s.scopes.all >= s.scopes.gre && s.scopes.all >= s.scopes.ielts);
+RV.setReviewScope('ielts');
+k = keys(); assert.ok(!k.has('obdurate') && k.has('commute') && k.has('abate'), 'IELTS scope');
+assert.equal(RV.inScope({src: []}, 'ielts'), true); assert.equal(RV.inScope({src: []}, 'gre'), false);   // no source counts as IELTS
+assert.ok(RV.queue({scope: 'gre', cap: false}).some(x => x.key === 'obdurate'), 'an explicit scope overrides the saved one');
+// pages asking for their own tracks (英义猜词) are not narrowed by the scope
+RV.recall({en: 'obdurate', src: 'notebook'}, 'none', {mode: 't', def: 'unreasonably stubborn'});
+assert.ok(RV.queue({tracks: ['e'], cap: false}).some(x => x.key === 'obdurate'));
+// saved as a number so every host's max-merge keeps the newest choice — even if a clock runs behind
+const v1 = JSON.parse(data.get('ielts_srs_meta')).scopeV;
+at(299); RV.setReviewScope('gre');
+const v2 = JSON.parse(data.get('ielts_srs_meta')).scopeV;
+assert.ok(v2 > v1 && v2 % 4 === 1 && v1 % 4 === 2);
+assert.equal(RV.mergeMeta({scopeV: v1, cap: 60}, {scopeV: v2}).scopeV, v2);
+assert.equal(RV.mergeMeta({scopeV: v2}, {scopeV: v1}).scopeV, v2);
+assert.ok(sent.some(m => m.deck === 'srs' && m.payload.meta && m.payload.meta.scopeV === v2), 'scope change is persisted');
+RV.setReviewScope('all'); at(300);
+assert.ok(keys().has('commute'));
+
 // ---- word forms for 搭配填空 ----
 for (const [w, form] of [['stop', 'stopped'], ['run', 'running'], ['go', 'went'], ['go', 'gone'], ['take part in', 'took part in'],
   ['study', 'studied'], ['make', 'making'], ['analysis', 'analyses'], ['child', 'children'], ['good', 'better'], ['travel', 'travelled'],
   ['die', 'dying'], ['agree', 'agreed'], ['knife', 'knives'], ['panic', 'panicked'], ['begin', 'beginning']])
   assert.ok(RV.inflections(w).includes(form), w + ' → ' + form);
 assert.ok(!RV.inflections('see').includes('seed') && !RV.inflections('good').includes('goods'));
-console.log('PASS: UK/US spellings accepted, misspellings rejected, format slips flagged; cross-day promotion, lapses, hints, merge, queue cap and seeding behave as specified; mistakes are diagnosed by cause and drilled words wait for an unaided re-test; writing recall (p) and speaking (o) are tracked apart from dictation; inflections cover irregular forms.');
+console.log('PASS: 复习范围 GRE/雅思/全部 filters the queue, counts and metrics, newest choice wins in merges; UK/US spellings accepted, misspellings rejected, format slips flagged; cross-day promotion, lapses, hints, merge, queue cap and seeding behave as specified; mistakes are diagnosed by cause and drilled words wait for an unaided re-test; writing recall (p) and speaking (o) are tracked apart from dictation; inflections cover irregular forms.');

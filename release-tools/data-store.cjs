@@ -56,7 +56,7 @@ class DataStore {
     if(deck==='config') Object.assign(root.decks.config,payload);
     else if(deck==='srs') root.decks.srs=Data.mergeReview(root.decks.srs,payload);
     else if(deck==='stats') root.decks.stats=Data.mergeStats(root.decks.stats,payload);
-    else if(['p1','vj','scene'].includes(deck)) {
+    else if(['p1','vj','scene','gre'].includes(deck)) {
       Data.remember(root.decks[deck],root.decks[deck].daily);
       Object.assign(root.decks[deck],payload);
       Data.remember(root.decks[deck],payload.daily);

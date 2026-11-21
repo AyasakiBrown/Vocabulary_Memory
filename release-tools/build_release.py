@@ -11,11 +11,11 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '1.1.6'
+VERSION = '2.0.0'
 OUT = ROOT / 'GitHub-Release' / ('v' + VERSION)
 ELECTRON = '44.3.0'
 ASSETS = ['index.html', 'p1.html', 'vj.html', 'scene.html', 'notebook.html',
-          'wrong.html', 'review.html', 'edef.html', 'edef.js', 'mistakes.js', 'srs.js', 'learning-data.js', 'shortcuts.js', 'dict.js', 'defs.js', 'emoji.js', 'images.js', 'icon-512.png', 'icon-180.png', 'AppIcon.icns']
+          'wrong.html', 'review.html', 'edef.html', 'edef.js', 'gre.html', 'gre.js', 'gre-paraphrases.js', 'gre-synonym-groups.js', 'gre-synonyms.js', 'mistakes.js', 'srs.js', 'learning-data.js', 'shortcuts.js', 'dict.js', 'defs.js', 'emoji.js', 'images.js', 'icon-512.png', 'icon-180.png', 'AppIcon.icns']
 
 def run(*args):
     subprocess.run(args, check=True)
@@ -64,6 +64,21 @@ def audit(folder):
         for pattern in active:
             assert not re.search(pattern, b, re.I), f'Privacy scan failed: {p.relative_to(folder)}'
 
+def brand_exe(exe, stage):
+    """Give IELTSVocab.exe the app's icon and name (Explorer, Start menu, pinned taskbar). Never blocks a release."""
+    tool, ico = ROOT / 'release-tools' / 'set-exe-icon.cjs', ROOT / 'release-tools' / 'AppIcon.ico'
+    if not (tool.exists() and ico.exists()):
+        print('Note: set-exe-icon.cjs / AppIcon.ico not found; IELTSVocab.exe keeps the Electron icon.', flush=True)
+        return
+    tools = stage / 'exe-tools'
+    try:
+        # pure-JavaScript PE resource editor, pinned (no native build, nothing installed globally)
+        run('npm', 'install', '--no-audit', '--no-fund', '--silent', '--prefix', str(tools), 'resedit@3.1.0', 'pe-library@2.0.1')
+        subprocess.run(['node', str(tool), str(exe), str(ico), VERSION], check=True,
+                       env={**os.environ, 'NODE_PATH': str(tools / 'node_modules')})
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f'Note: could not set the .exe icon ({e}); IELTSVocab.exe keeps the Electron icon.', flush=True)
+
 def main():
     commit = source_commit()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -75,14 +90,15 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / 'src' / name, target)
         # Include only the public build files, never personal sync scripts/certificates.
-        for name in ['main.cjs', 'desktop.js', 'preload.cjs', 'data-store.cjs', 'test-learning-data.cjs', 'test-desktop-shell.cjs', 'test-edef.cjs', 'test-srs.cjs', 'test_native_data.py', 'test_native_smoke.py', 'test-session-resume.cjs', 'test-quiz-retry.cjs', 'test-mistakes.cjs', 'test-production.cjs', 'build_release.py', 'README.md', 'VERSIONS.md']:
+        for name in ['main.cjs', 'desktop.js', 'preload.cjs', 'data-store.cjs', 'test-learning-data.cjs', 'test-desktop-shell.cjs', 'test-edef.cjs', 'test-gre.cjs', 'test-gre-game.cjs', 'test-electron-shell.cjs', 'test-srs.cjs', 'test_native_data.py', 'test_native_smoke.py', 'test-session-resume.cjs', 'test-quiz-retry.cjs', 'test-mistakes.cjs', 'test-production.cjs', 'build_release.py', 'set-exe-icon.cjs', 'make-icon.cjs', 'README.md', 'VERSIONS.md', 'GRE-SYNONYMS.md']:
             write(source / 'release-tools' / name, (ROOT / 'release-tools' / name).read_text())
+        shutil.copyfile(ROOT / 'release-tools' / 'AppIcon.ico', source / 'release-tools' / 'AppIcon.ico')
         write(source / 'README.md', (ROOT / 'release-tools' / 'README.md').read_text())
         if commit: write(source / 'SOURCE_COMMIT.txt', f'v{VERSION} 构建自提交 {commit}\n')
         write(source / '.gitignore', '*.pem\n*.crt\ndata.json\nbackups/\n.DS_Store\n.claude/\n.codex/\n.env*\nnode_modules/\nGitHub-Release/\n*.log\n')
 
         mac = stage / 'IELTSVocab-macOS-universal'
-        app = mac / '雅思词汇听写合集.app'
+        app = mac / 'Vocabulary Memory.app'
         res = app / 'Contents' / 'Resources'
         res.mkdir(parents=True)
         (app / 'Contents' / 'MacOS').mkdir()
@@ -98,6 +114,10 @@ def main():
         write(res / 'review.html', page.replace('<script src="dict.js"></script>', '<script>\n' + (res / 'dict.js').read_text() + '\n</script>'))
         page = (res / 'edef.html').read_text()
         write(res / 'edef.html', page.replace('<script src="edef.js"></script>', '<script>\n' + (res / 'edef.js').read_text() + '\n</script>'))
+        page = (res / 'gre.html').read_text()
+        for asset in ['gre.js', 'gre-paraphrases.js', 'gre-synonym-groups.js', 'gre-synonyms.js']:
+            page = page.replace(f'<script src="{asset}"></script>', '<script>\n' + (res / asset).read_text() + '\n</script>')
+        write(res / 'gre.html', page)
         bins = []
         for arch in ['arm64', 'x86_64']:
             binary = stage / ('IELTSVocab-' + arch)
@@ -126,6 +146,7 @@ def main():
         assert hashlib.sha256(download.read_bytes()).hexdigest() == expected, 'Electron checksum mismatch'
         with zipfile.ZipFile(download) as z: z.extractall(win)
         (win / 'electron.exe').rename(win / 'IELTSVocab.exe')
+        brand_exe(win / 'IELTSVocab.exe', stage)
         (win / 'resources' / 'default_app.asar').unlink(missing_ok=True)
         packaged = win / 'resources' / 'app'
         for name in ASSETS:
@@ -139,7 +160,7 @@ def main():
         shutil.copyfile(source / 'release-tools' / 'main.cjs', packaged / 'main.cjs')
         for name in ['preload.cjs', 'data-store.cjs']:
             shutil.copyfile(source / 'release-tools' / name, packaged / name)
-        write(packaged / 'package.json', json.dumps({'name': 'ielts-vocab', 'productName': '雅思词汇听写合集', 'version': VERSION, 'main': 'main.cjs', 'private': True}, ensure_ascii=False, indent=2))
+        write(packaged / 'package.json', json.dumps({'name': 'ielts-vocab', 'productName': 'Vocabulary Memory', 'version': VERSION, 'main': 'main.cjs', 'private': True}, ensure_ascii=False, indent=2))
         write(win / 'README.md', (source / 'README.md').read_text())
         for folder in [source, mac, win]:
             audit(folder)

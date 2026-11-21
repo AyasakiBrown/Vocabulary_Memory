@@ -432,17 +432,37 @@
     for (const k of Object.keys(L)) for (const name of QUEUE) { const tr = track(L[k], name); if (tr && tr.rd === today) n++; }
     return n;
   }
+  /* 复习范围 (今日复习 scope): 'all' | 'gre' | 'ielts'. A word studied in both GRE and an IELTS deck belongs to both;
+     words with no source count as IELTS. Saved as meta.scopeV = ms*4 + code: every host merges ledger meta numerically
+     by max (and keeps the first value of anything else), so the newest choice is simply the largest number. */
+  const SCOPES = ['all', 'gre', 'ielts'];
+  function reviewScope() { const v = Number(M.scopeV) || 0; return SCOPES[v % 4] || 'all'; }
+  function setReviewScope(s) {
+    const c = SCOPES.indexOf(s); if (c < 0) return reviewScope();
+    const prev = Math.floor((Number(M.scopeV) || 0) / 4);
+    M.scopeV = Math.max(Math.floor(api.clock()), prev + 1) * 4 + c;      // never smaller than the last choice
+    persist([]); return s;
+  }
+  function inScope(r, s) {
+    if (!s || s === 'all') return true;
+    const src = r && Array.isArray(r.src) ? r.src : [], g = src.includes('gre');
+    return s === 'gre' ? g : (!src.length || src.some(x => x !== 'gre'));
+  }
+  // the mixed queue follows the chosen scope; a page asking for its own tracks (英义猜词: ['e']) sees everything
+  const scopeFor = opts => opts.scope || (Array.isArray(opts.tracks) ? 'all' : reviewScope());
   // opts.cap===false → everything due; opts.src → only words seen in that source;
-  // opts.tracks → other tracks than the mixed queue's (英义猜词 asks for ['e'])
+  // opts.tracks → other tracks than the mixed queue's (英义猜词 asks for ['e']); opts.scope overrides 复习范围
   function queue(opts) {
     opts = opts || {};
     const names = Array.isArray(opts.tracks) ? opts.tracks.filter(n => TRACKS.includes(n)) : QUEUE;
+    const sc = scopeFor(opts);
     const today = dayNo(), nb = notebookKeys(), all = [];
     for (const k of Object.keys(L)) {
       const r = L[k]; if (!r || typeof r !== 'object') continue;
       const src = Array.isArray(r.src) ? r.src : [];
       if (src.length && src.every(s => s === 'notebook') && !nb.has(k)) continue;   // deleted from 生词本
       if (opts.src && !src.includes(opts.src)) continue;
+      if (!inScope(r, sc)) continue;
       for (const name of names) {
         const tr = track(r, name);
         if (active(tr) && (tr.due || 0) <= today) all.push({key: k, track: name, rec: r, tr, pri: priority(tr, today)});
@@ -456,20 +476,24 @@
     return out;
   }
   function summary() {
-    const today = dayNo(), q = queue(), bySrc = {};
+    const today = dayNo(), sc = reviewScope(), q = queue(), bySrc = {}, scopes = {all: 0, gre: 0, ielts: 0};
     let tomorrow = 0, tracked = 0, steady = 0;
     for (const x of q) for (const s of (x.rec.src && x.rec.src.length ? x.rec.src : ['other'])) bySrc[s] = (bySrc[s] || 0) + 1;
+    for (const x of queue({cap: false, scope: 'all'})) for (const s of SCOPES) if (inScope(x.rec, s)) scopes[s]++;   // everything due, per scope
     for (const k of Object.keys(L)) for (const name of QUEUE) {
+      if (!inScope(L[k], sc)) continue;
       const tr = track(L[k], name); if (!active(tr)) continue;
       tracked++; if (tr.due === today + 1) tomorrow++; if (!tr.rc && (tr.lv || 0) >= STABLE) steady++;
     }
     return {due: q.length, again: q.filter(x => x.tr.wd === today).length, waiting: q.waiting, done: doneToday(today),
-      cap: cap(), tomorrow, tracked, stable: steady, bySrc};
+      cap: cap(), tomorrow, tracked, stable: steady, bySrc, scope: sc, scopes};
   }
   // Delayed performance: only first attempts after a gap count, never same-day retries.
   function metrics(names) {
     const m = {next: [0, 0], week: [0, 0], answers: 0, soft: 0, lapses: 0, sameDay: [0, 0]};
+    const sc = Array.isArray(names) ? 'all' : reviewScope();
     for (const k of Object.keys(L)) for (const name of (Array.isArray(names) ? names : QUEUE)) {
+      if (!inScope(L[k], sc)) continue;
       const tr = track(L[k], name); if (!tr) continue;
       m.answers += tr.n || 0; m.soft += tr.soft || 0; m.lapses += tr.lapse || 0;
       for (const h of Array.isArray(tr.h) ? tr.h : []) {
@@ -479,7 +503,7 @@
     }
     return m;
   }
-  Object.assign(api, {queue, summary, metrics, cap, setCap});
+  Object.assign(api, {queue, summary, metrics, cap, setCap, reviewScope, setReviewScope, inScope, SCOPES});
 
   /* ---------- word forms (搭配填空 finds the word inside the learner's own example) ----------
      Regular endings plus a checked list of irregular verbs, plurals and comparatives.
@@ -694,7 +718,7 @@
     };
     const events = Object.assign({}, boot.events && typeof boot.events === 'object' ? boot.events : {}, readJSON('ielts_wrong_events', {}));
     for (const e of Object.values(events).sort((x, y) => (x.ts || 0) - (y.ts || 0))) {
-      if (!e || !e.word) continue;
+      if (!e || !e.word || e.source === 'edef') continue;      // 英义猜词 is graded on its own track e
       const t = slot(e.word, e.source); if (!t) continue;
       t.n++; t.last = Math.max(t.last, e.ts || 0); if (e.meaning && !t.zh) t.zh = e.meaning;
       if (e.mode === 'quiz') { t.meaning.push({answer: String(e.answer || ''), alt: e.alt || null, ts: e.ts || 0}); t.causes.meaning = (t.causes.meaning || 0) + 1; continue; }
@@ -831,7 +855,7 @@
      res: 1 clean, 2 hint / format slip, 0 wrong — w keeps the day's FIRST answer per word.
      Records older than KEEP_W days drop w and keep u (words) + f (first-try clean). */
   const SKEY = 'ielts_stats', DEVKEY = 'ielts_dev', KEEP_W = 60;
-  const SOURCES = ['p1', 'vj', 'scene', 'notebook', 'wrong', 'review'];
+  const SOURCES = ['p1', 'vj', 'scene', 'gre', 'notebook', 'wrong', 'review'];
   const PAGE = (() => { try { const m = /([a-z0-9]+)\.html/i.exec(scope.location.pathname); return m ? m[1] : ''; } catch (e) { return ''; } })();
   const pad2 = n => String(n).padStart(2, '0');
   function dateKey(ms) { const d = new Date(ms == null ? api.clock() : ms); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
@@ -929,7 +953,7 @@
     for (const e of wrong) if (e && e.en) plant({en: e.en, zh: e.zh, alts: e.alts, pos: e.pos, col: e.col, src: e.src || 'wrong'}, 'd', e.ts);
     const events = Object.assign({}, boot.events && typeof boot.events === 'object' ? boot.events : {}, readJSON('ielts_wrong_events', {}));
     for (const e of Object.values(events)) {
-      if (!e || !e.word) continue;
+      if (!e || !e.word || e.source === 'edef') continue;
       plant({en: e.word, zh: e.meaning, src: e.source || 'wrong'}, e.mode === 'quiz' ? 'm' : e.mode === 'wcloze' || e.mode === 'wprompt' ? 'p' : 'd', e.ts);
     }
     M.seed = 1;

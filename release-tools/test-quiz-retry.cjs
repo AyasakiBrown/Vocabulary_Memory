@@ -22,7 +22,7 @@ const root=path.resolve(__dirname,'../src');
     if(!button)throw Error('Missing choice');button.click();
   },ok);
   const eventCount=()=>page.evaluate(()=>Object.keys(IELTSMistakes.read()).length);
-  for(const deck of ['p1','vj','scene']){
+  for(const deck of ['p1','vj','scene','gre']){
     await page.goto(base+'/'+deck+'.html');
     await page.evaluate(()=>{settings.auto=false;enterMode('quiz',true);state.list=state.list.slice(0,3);renderQuiz();});
     const wrongID=await page.evaluate(()=>state.list[0].id), before=await eventCount();

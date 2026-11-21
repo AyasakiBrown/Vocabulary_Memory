@@ -1,7 +1,7 @@
 /* Shared, versioned desktop backup format. No network or personal defaults. */
 (function (scope) {
   'use strict';
-  const names = ['p1', 'vj', 'scene', 'notebook', 'wrong', 'srs', 'stats', 'config'];
+  const names = ['p1', 'vj', 'scene', 'gre', 'notebook', 'wrong', 'srs', 'stats', 'config'];
   const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
   const check = (yes, message) => { if (!yes) throw Error(message); };
   function safeTree(x, depth = 0) {
@@ -110,7 +110,7 @@
   const pack = data => JSON.stringify({format:'IELTSVocabBackup', version:1, createdAt:new Date().toISOString(), data:normalize(data)}, null, 2);
   function summary(root) {
     const d = normalize(root).decks;
-    return `生词 ${d.notebook.list.length} 个，错词 ${d.wrong.list.length} 个；三个词库进度 ${['p1','vj','scene'].map(k=>Object.keys(d[k].prog).length).join(' / ')} 条。包含设置、分类、收藏和已有每日统计。`;
+    return `生词 ${d.notebook.list.length} 个，错词 ${d.wrong.list.length} 个；词库进度 ${['p1','vj','scene','gre'].map(k=>Object.keys(d[k].prog).length).join(' / ')} 条（Part 1 / 真经 / 场景 / GRE）。包含设置、分类、收藏和已有每日统计。`;
   }
   function prepareRestore(storage) {
     storage.setItem('ielts_restore_pending', '1');
@@ -118,7 +118,7 @@
   }
   function hydrate(root, storage) {
     const d = normalize(root).decks;
-    for (const n of ['p1','vj','scene']) for (const f of ['prog','daily','settings']) {
+    for (const n of ['p1','vj','scene','gre']) for (const f of ['prog','daily','settings']) {
       const key = `ielts_${n}_${f}`;
       if (d[n][f] === undefined) storage.removeItem(key); else storage.setItem(key, JSON.stringify(d[n][f]));
     }
@@ -148,8 +148,8 @@
   // is the source of truth from this update on; for the three word decks the older
   // per-deck counters (history, merged by max) still cover days or answers from before
   // it, so each deck takes whichever of the two saw more answers that day.
-  const DAILY_DECKS = ['p1', 'vj', 'scene'];
-  const SOURCE_NAMES = {p1: 'Part 1', vj: '真经', scene: '场景', notebook: '生词本', wrong: '错词本', review: '今日复习', other: '其他'};
+  const DAILY_DECKS = ['p1', 'vj', 'scene', 'gre'];
+  const SOURCE_NAMES = {p1: 'Part 1', vj: '真经', scene: '场景', gre: 'GRE', notebook: '生词本', wrong: '错词本', review: '今日复习', other: '其他'};
   function dayNumber(date) {
     const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(date || '');
     return m ? (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3]) : NaN;
