@@ -39,12 +39,37 @@ Windows 版本已通过 Electron 回归测试，Windows 实机验证待完成。
 
 ## v2.1.0 更新（2026-11-21）
 
-- 新增 GRE 数学词汇练习，247 个词条均配有 GRE 风格小题，答题计入学习记录。
-- 新增学习记录图表，可查看答题趋势、复习负担与 GRE 学习进度。
-- 首页加入 GRE 优先的今日计划和雅思练习暂停选项。错词本可按 GRE、雅思或全部筛选。
-- 修复 Windows 词库菜单错位，新增独立的「∑ GRE 数学词汇」入口。
+[简体中文](#中文更新说明) · [English](#english-release-notes)
 
-升级沿用现有学习记录。macOS 已检查页面加载，Windows 桌面外壳已完成 Electron 回归测试，Windows 实机验证待完成。
+### 中文更新说明
+
+#### 更新内容
+
+- **GRE 数学词汇。** 247 个词条均配有 GRE 风格的练习题，答题会计入学习记录。
+- **学习记录图表。** 可以查看答题趋势、待复习词汇数量和 GRE 学习进度。
+- **GRE 优先的今日计划。** 可以在首页暂停或恢复雅思练习，并在错词本中按 GRE、雅思或全部筛选。
+- **Windows 菜单修复。** 修正「词库」菜单项打开错误页面的问题，并为「∑ GRE 数学词汇」增加独立入口。
+
+#### 安装与验证
+
+升级会保留现有学习记录。macOS ZIP 支持 Apple Silicon 和 Intel Mac，采用 ad-hoc 签名。Windows x64 ZIP 内置 Electron，请完整解压后运行。
+
+macOS 页面加载和 Windows 桌面外壳的 Electron 回归测试已通过。Windows 实机验证待完成。发布页附件包括源码 ZIP、SHA-256 校验值和构建提交号。
+
+### English release notes
+
+#### What's new
+
+- **GRE Quant vocabulary.** All 247 terms have GRE-style practice questions. Your answers count toward your study activity.
+- **Study activity charts.** Track your practice trends, upcoming review workload, and GRE progress.
+- **A GRE-first daily plan.** Pause or resume IELTS practice from the home screen, and view mistakes from GRE, IELTS, or all practice.
+- **Windows menu fix.** Vocabulary menu items now open the correct pages. GRE Quant Vocabulary also has its own menu entry.
+
+#### Installation and testing
+
+Updating keeps your existing study records. The macOS ZIP supports Apple Silicon and Intel Macs and uses ad-hoc signing. The Windows x64 ZIP includes Electron. Extract the entire archive before running the app.
+
+macOS page-load checks and Electron regression tests for the Windows desktop shell passed. Testing on Windows hardware is pending. The release assets include the source ZIP, SHA-256 checksums, and the build commit ID.
 
 ## v2.0.0 更新（2026-11-21）
 
